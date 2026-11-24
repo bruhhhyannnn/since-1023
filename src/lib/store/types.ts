@@ -26,7 +26,7 @@ export interface PhotoStore {
 export class StoreNotConfiguredError extends Error {
   constructor() {
     super(
-      "Photo storage isn't connected yet. Add SUPABASE_URL and SUPABASE_SECRET_KEY (see the README).",
+      "Photo storage isn't connected yet. Add NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY (see the README).",
     );
   }
 }

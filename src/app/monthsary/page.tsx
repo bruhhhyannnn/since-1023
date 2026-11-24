@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { OwnerOnly } from "@/components/OwnerOnly";
 import { PostMaker } from "@/components/PostMaker";
 import { StorageNotice } from "@/components/ui";
 import { loadPhotos } from "@/lib/data";
-import { DAY, albumFor } from "@/lib/time";
+import { albumFor } from "@/lib/time";
 
-export const metadata: Metadata = { title: "Monthsary post" };
+export const metadata: Metadata = { title: "Monthsary post", robots: { index: false } };
 
 export default function MonthsaryPage({ searchParams }: PageProps<"/monthsary">) {
   return (
@@ -19,7 +20,9 @@ export default function MonthsaryPage({ searchParams }: PageProps<"/monthsary">)
       </header>
       <div className="mt-10">
         <Suspense fallback={<div className="aspect-[4/5] max-w-md animate-pulse rounded-3xl bg-wheat/70" />}>
-          <Maker searchParams={searchParams} />
+          <OwnerOnly>
+            <Maker searchParams={searchParams} />
+          </OwnerOnly>
         </Suspense>
       </div>
     </div>
@@ -31,8 +34,8 @@ async function Maker({ searchParams }: { searchParams: PageProps<"/monthsary">["
   const loaded = await loadPhotos();
   const { now } = loaded;
   const maxN = Math.max(1, albumFor(now));
-  // Default to the monthsary that just happened (within 3 days), otherwise the upcoming one.
-  const fallback = Math.max(1, albumFor(now - 3 * DAY));
+  // Default to the newest finished album (each one is done at 12:00 AM on the 23rd).
+  const fallback = Math.max(1, maxN - 1);
   const requested = typeof raw === "string" && /^\d+$/.test(raw) ? Number(raw) : NaN;
   const initialN = requested >= 1 && requested <= maxN ? requested : fallback;
 

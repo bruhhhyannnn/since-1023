@@ -4,28 +4,33 @@ Our little corner of the internet. Bryan & Cecilia, together since **Wednesday, 
 
 ## What it does
 
-- **Live counter.** Years, months, days, hours, minutes and seconds since 7:00 PM on Oct 23, 2019, ticking every second. It always counts in Philippine time, so it reads the same on every phone.
+- **Live counter.** Years, months, days, hours, minutes and seconds since exactly 7:00 PM on Oct 23, 2019, ticking every second. It always counts in Philippine time, so it reads the same on every phone.
 - **Countdowns** to the next monthsary and the next anniversary, plus fun milestones like 2,600 days or 250 million seconds together.
-- **Memories.** Upload photos any day. Each one goes into its monthsary album based on the date it was taken. You can heart favorites, fix dates and add captions.
-- **Monthsary post maker.** Pick a monthsary and its photos (favorites are picked for you) and it lays them out with our names and dates. Sizes: Instagram post (1080×1350) and story (1080×1920). Share it straight to Instagram from your phone, or download it. There's a caption idea you can copy too.
+- **Memories,** presented like the Photos app. Each monthsary gets an album with a full-size cover photo and the photos grouped by day. Favorites are shown bigger. The viewer is swipeable, and **Play** runs a slideshow of the album.
+- **Monthsary post maker.** Pick a monthsary and its photos (favorites are picked for you) and it lays them out with our names and dates. Sizes: Instagram post (1080×1350) and story (1080×1920). Share it straight to Instagram from your phone, or download it.
 
 ### How albums work
 
-The album for a monthsary holds everything from the **day after the last monthsary through the monthsary day itself**. For example, the 86th Monthsary album is Nov 24 – Dec 23, 2026, so photos from the celebration on the 23rd land in that night's post. Every 12th monthsary is called an anniversary (the 84th is the 7th Anniversary).
+Each album runs from the **23rd through the 22nd**. At exactly **12:00 AM on the 23rd** the album is complete: the home page says "Happy 86th Monthsary!" all day and links to it, and it's ready for its Instagram post. Every 12th monthsary is called an anniversary (the 84th is the 7th Anniversary). Photos from before Oct 23, 2019 go in "Before Us".
 
 ### Who can do what
 
-The site is public, so anyone with the link can see the counter and the photos. Adding, editing or deleting photos asks for **our passcode** once, and then that phone remembers it.
+- **Visitors** can see the counter and every album. They never see a sign-in page or any edit buttons.
+- **Us (the owners)** sign in through a hidden door: **tap the heart in the footer five times**, or go to `/login`. Once signed in, you can add photos, heart favorites, edit dates and captions, delete photos and make posts. "Signed in as … · Sign out" appears at the bottom of every page.
+
+Sign-in uses Supabase Auth. Only accounts whose email is in `OWNER_EMAILS` can change anything, and every change is checked on the server.
 
 ## Put it online (about 15 minutes, free)
 
-### 1. Supabase (stores the photos)
+### 1. Supabase (accounts and photos)
 
-1. Sign up at [supabase.com](https://supabase.com) and create a new project (the free plan is plenty).
-2. Open **SQL Editor → New query**, paste everything in [`supabase/schema.sql`](supabase/schema.sql), and click **Run**.
-3. Go to **Project Settings → API Keys** and copy:
-   - the **Project URL** (looks like `https://abcd1234.supabase.co`)
-   - a **secret key** (`sb_secret_…`; the older `service_role` key works too). Keep it private.
+1. Create a project at [supabase.com](https://supabase.com) (the free plan is plenty).
+2. **SQL Editor → New query:** paste everything in [`supabase/schema.sql`](supabase/schema.sql) and click **Run**.
+3. **Authentication → Sign In / Providers:** turn off **Allow new users to sign up**, so nobody else can make an account.
+4. **Authentication → Users → Add user → Create new user:** enter your email and a password and tick **Auto Confirm User**. Do the same for Cecilia if she should be able to edit too.
+5. Copy these values for the next step:
+   - **Connect → Framework → Next.js (App Router):** `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Skip the "install packages" and "add files" steps on that screen; they're already done in this code.
+   - **Project Settings → API Keys → Secret keys:** a secret key (`sb_secret_…`). Keep it private.
 
 ### 2. Vercel (hosts the site)
 
@@ -34,11 +39,12 @@ The site is public, so anyone with the link can see the counter and the photos. 
 
    | Name | Value |
    | --- | --- |
-   | `SUPABASE_URL` | your Project URL |
+   | `NEXT_PUBLIC_SUPABASE_URL` | from Supabase → Connect |
+   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | from Supabase → Connect |
    | `SUPABASE_SECRET_KEY` | your secret key |
-   | `UPLOAD_PASSCODE` | a passcode only you two know (a short phrase is best) |
+   | `OWNER_EMAILS` | the emails you created in step 4, separated by commas |
 
-3. Click **Deploy**. Your site will be at something like `since-1023.vercel.app`. You can add your own domain later in Vercel.
+3. Click **Deploy**. Your site will be at something like `since-1023.vercel.app`. If you change these settings later, redeploy so they take effect.
 
 A daily job (`vercel.json`) checks in on Supabase, because free Supabase projects pause after a week without any activity.
 
@@ -46,11 +52,11 @@ A daily job (`vercel.json`) checks in on Supabase, because free Supabase project
 
 ```bash
 npm install
-cp .env.example .env.local   # then set UPLOAD_PASSCODE
+cp .env.example .env.local   # then fill it in
 npm run dev                  # http://localhost:3000
 ```
 
-Without Supabase settings, photos are saved in `./.data` on your computer.
+If you leave `SUPABASE_SECRET_KEY` empty on your computer, photos you add there go to `./.data` instead of your real albums. That's handy for trying things out.
 
 ```bash
 npm test        # checks the date math (monthsaries, albums, the exact 7 PM start)
@@ -65,8 +71,9 @@ npm run build
 
 ## How it's built
 
-[Next.js](https://nextjs.org) 16 + Tailwind CSS, with photos in [Supabase](https://supabase.com) Storage and Postgres, hosted on [Vercel](https://vercel.com).
+[Next.js](https://nextjs.org) 16 + Tailwind CSS, with sign-in, photos and data in [Supabase](https://supabase.com), hosted on [Vercel](https://vercel.com).
 
+- `src/proxy.ts` keeps an owner's session fresh and turns visitors away from the owner-only pages. `src/lib/auth.ts` decides who counts as an owner.
 - Photos are resized on the phone before uploading (max 2048px, plus a 640px thumbnail), so uploads are quick and the free 1 GB lasts for years.
 - The Instagram image is drawn in the browser on a `<canvas>`, so there's no server cost.
 - All date math lives in [`src/lib/time.ts`](src/lib/time.ts), and [`src/lib/time.test.ts`](src/lib/time.test.ts) tests it.

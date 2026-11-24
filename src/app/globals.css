@@ -58,6 +58,12 @@ body {
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  .pop {
+    animation: pop 0.35s ease-out;
+  }
+  @keyframes pop {
+    50% { transform: scale(1.5); }
+  }
   .beat {
     animation: beat 2.4s ease-in-out infinite;
   }
@@ -67,5 +73,39 @@ body {
     24% { transform: scale(1); }
     36% { transform: scale(1.1); }
     48% { transform: scale(1); }
+  }
+}
+
+/* Photo viewer & slideshow */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.progress {
+  width: 0;
+  animation-name: progress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+@keyframes progress {
+  to { width: 100%; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fade-in {
+    animation: fade-in 0.35s ease-out;
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+  }
+  .kenburns {
+    animation: kenburns 6s ease-out forwards;
+  }
+  @keyframes kenburns {
+    from { transform: scale(1.02); }
+    to { transform: scale(1.16); }
   }
 }

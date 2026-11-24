@@ -1,6 +1,6 @@
 import { US } from "./us";
 
-type Style = "long" | "medium" | "short" | "range" | "time" | "dots";
+type Style = "long" | "medium" | "short" | "range" | "time" | "dots" | "day" | "dayYear";
 
 const formats: Record<Style, Intl.DateTimeFormatOptions> = {
   // Wednesday, October 23, 2019
@@ -13,6 +13,10 @@ const formats: Record<Style, Intl.DateTimeFormatOptions> = {
   range: { month: "long", day: "numeric", year: "numeric" },
   // 7:00 PM
   time: { hour: "numeric", minute: "2-digit" },
+  // Sunday, November 23
+  day: { weekday: "long", month: "long", day: "numeric" },
+  // Sunday, November 23, 2026
+  dayYear: { weekday: "long", month: "long", day: "numeric", year: "numeric" },
   // handled below
   dots: {},
 };

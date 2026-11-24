@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
+import { OwnerOnly } from "@/components/OwnerOnly";
 import { Uploader } from "@/components/Uploader";
 
-export const metadata: Metadata = { title: "Add photos" };
+export const metadata: Metadata = { title: "Add photos", robots: { index: false } };
 
 export default function UploadPage() {
   return (
@@ -16,7 +18,11 @@ export default function UploadPage() {
         it&apos;s off.
       </p>
       <div className="mt-8">
-        <Uploader />
+        <Suspense fallback={<div className="h-48 animate-pulse rounded-3xl bg-wheat/70" />}>
+          <OwnerOnly>
+            <Uploader />
+          </OwnerOnly>
+        </Suspense>
       </div>
     </div>
   );

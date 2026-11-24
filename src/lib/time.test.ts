@@ -4,6 +4,8 @@ import {
   START,
   albumFor,
   albumRange,
+  albumReadyAt,
+  celebrating,
   completedMonths,
   dayNumber,
   elapsed,
@@ -111,7 +113,6 @@ describe("monthsaries", () => {
   });
 
   it("names them", () => {
-    expect(monthsaryTitle(0)).toBe("Day One");
     expect(monthsaryTitle(1)).toBe("1st Monthsary");
     expect(monthsaryTitle(86)).toBe("86th Monthsary");
     expect(monthsaryTitle(84)).toBe("7th Anniversary");
@@ -129,33 +130,61 @@ describe("monthsaries", () => {
 });
 
 describe("albums", () => {
-  it("puts the 24th through the 23rd in the same album", () => {
-    expect(albumFor(ph(2026, 11, 23, 23, 59))).toBe(85);
-    expect(albumFor(ph(2026, 11, 24, 0, 0))).toBe(86);
+  it("runs from the 23rd through the 22nd", () => {
+    expect(albumFor(ph(2026, 10, 23, 0, 0))).toBe(85);
+    expect(albumFor(ph(2026, 11, 22, 23, 59, 59))).toBe(85);
+    expect(albumFor(ph(2026, 11, 23, 0, 0))).toBe(86);
+    expect(albumFor(ph(2026, 11, 23, 21))).toBe(86);
     expect(albumFor(ph(2026, 12, 1, 12))).toBe(86);
-    expect(albumFor(ph(2026, 12, 23, 8))).toBe(86);
-    expect(albumFor(ph(2026, 12, 23, 21))).toBe(86);
-    expect(albumFor(ph(2026, 12, 24, 0))).toBe(87);
+    expect(albumFor(ph(2026, 12, 22, 23, 59))).toBe(86);
+    expect(albumFor(ph(2026, 12, 23, 0, 0))).toBe(87);
+  });
+
+  it("is complete at exactly 12:00 AM on the monthsary day", () => {
+    expect(albumReadyAt(86)).toBe(ph(2026, 12, 23, 0, 0));
+    expect(albumFor(albumReadyAt(86) - 1)).toBe(86);
+    expect(albumFor(albumReadyAt(86))).toBe(87);
   });
 
   it("handles year boundaries", () => {
     expect(albumFor(ph(2026, 12, 31))).toBe(87);
-    expect(albumFor(ph(2027, 1, 23))).toBe(87);
-    expect(albumFor(ph(2027, 1, 24))).toBe(88);
+    expect(albumFor(ph(2027, 1, 22))).toBe(87);
+    expect(albumFor(ph(2027, 1, 23))).toBe(88);
   });
 
-  it("collects day one and anything earlier in album 0", () => {
-    expect(albumFor(ph(2019, 10, 23, 12))).toBe(0);
-    expect(albumFor(ph(2019, 5, 1))).toBe(0);
-    expect(albumFor(ph(2019, 10, 24))).toBe(1);
+  it("starts album 1 on day one; anything earlier is album 0", () => {
+    expect(albumFor(ph(2019, 10, 23, 8))).toBe(1);
+    expect(albumFor(ph(2019, 11, 22, 23))).toBe(1);
+    expect(albumFor(ph(2019, 11, 23))).toBe(2);
+    expect(albumFor(ph(2019, 10, 22, 23, 59))).toBe(0);
+    expect(albumFor(ph(2018, 5, 1))).toBe(0);
+    expect(monthsaryTitle(0)).toBe("Before Us");
   });
 
   it("describes each album's date range", () => {
     const r = albumRange(86);
-    expect(formatRange(r.from, r.to)).toBe("Nov 24 – Dec 23, 2026");
+    expect(formatRange(r.from, r.to)).toBe("Nov 23 – Dec 22, 2026");
     const r2 = albumRange(87);
-    expect(formatRange(r2.from, r2.to)).toBe("Dec 24, 2026 – Jan 23, 2027");
+    expect(formatRange(r2.from, r2.to)).toBe("Dec 23, 2026 – Jan 22, 2027");
+    const r1 = albumRange(1);
+    expect(formatRange(r1.from, r1.to)).toBe("Oct 23 – Nov 22, 2019");
     expect(albumRange(0).from).toBeNull();
+    expect(formatDate(albumRange(0).to)).toBe("Oct 22, 2019");
+  });
+});
+
+describe("celebrating", () => {
+  it("congratulates all day on the 23rd, starting at 12:00 AM", () => {
+    expect(celebrating(ph(2026, 11, 22, 23, 59, 59))).toBeNull();
+    expect(celebrating(ph(2026, 11, 23, 0, 0))).toBe(85);
+    expect(celebrating(ph(2026, 11, 23, 18, 59))).toBe(85);
+    expect(celebrating(ph(2026, 11, 23, 23, 59, 59))).toBe(85);
+    expect(celebrating(ph(2026, 11, 24, 0, 0))).toBeNull();
+    expect(celebrating(ph(2027, 10, 23, 0, 0))).toBe(96);
+  });
+
+  it("doesn't celebrate day one itself", () => {
+    expect(celebrating(ph(2019, 10, 23, 20))).toBeNull();
   });
 });
 

@@ -1,5 +1,5 @@
+import { requireOwner } from "@/lib/auth";
 import { LIMITS } from "@/lib/photos";
-import { requirePasscode } from "@/lib/passcode";
 import { StoreNotConfiguredError, getStore } from "@/lib/store";
 
 const isJpeg = async (blob: Blob) => {
@@ -9,7 +9,7 @@ const isJpeg = async (blob: Blob) => {
 
 /** Upload one photo. The browser has already resized it to JPEG. */
 export async function POST(request: Request) {
-  const denied = requirePasscode(request);
+  const denied = await requireOwner(request);
   if (denied) return denied;
 
   let form: FormData;

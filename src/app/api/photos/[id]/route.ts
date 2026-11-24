@@ -1,5 +1,5 @@
+import { requireOwner } from "@/lib/auth";
 import { LIMITS, type PhotoPatch } from "@/lib/photos";
-import { requirePasscode } from "@/lib/passcode";
 import { StoreNotConfiguredError, getStore } from "@/lib/store";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -11,7 +11,7 @@ function failure(err: unknown) {
 
 /** Heart a photo, fix its date, or change its caption. */
 export async function PATCH(request: Request, ctx: RouteContext<"/api/photos/[id]">) {
-  const denied = requirePasscode(request);
+  const denied = await requireOwner(request);
   if (denied) return denied;
   const { id } = await ctx.params;
   if (!UUID.test(id)) return Response.json({ error: "Photo not found." }, { status: 404 });
@@ -48,7 +48,7 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/photos/[id
 }
 
 export async function DELETE(request: Request, ctx: RouteContext<"/api/photos/[id]">) {
-  const denied = requirePasscode(request);
+  const denied = await requireOwner(request);
   if (denied) return denied;
   const { id } = await ctx.params;
   if (!UUID.test(id)) return Response.json({ error: "Photo not found." }, { status: 404 });

@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { PhotoGrid } from "@/components/PhotoGrid";
-import { ButtonLink, StorageNotice } from "@/components/ui";
+import { AlbumView } from "@/components/AlbumView";
+import { StorageNotice } from "@/components/ui";
 import { albumOf } from "@/lib/albums";
+import { getOwner } from "@/lib/auth";
 import { loadPhotos } from "@/lib/data";
-import { formatRange } from "@/lib/format";
-import { albumFor, albumRange, monthsaryTitle, spanText } from "@/lib/time";
+import { albumFor, celebrating, monthsaryTitle } from "@/lib/time";
 
 const parse = (raw: string) => (/^\d{1,4}$/.test(raw) ? Number(raw) : null);
 
@@ -16,14 +16,14 @@ export async function generateMetadata({ params }: PageProps<"/memories/[n]">): 
   return { title: n === null ? "Memories" : monthsaryTitle(n) };
 }
 
-export default function AlbumPage({ params }: PageProps<"/memories/[n]">) {
+export default function AlbumPage({ params, searchParams }: PageProps<"/memories/[n]">) {
   return (
-    <div className="mx-auto max-w-5xl px-4 pt-8 sm:pt-12">
-      <Link href="/memories" className="text-sm text-brown hover:text-burgundy">
+    <div className="mx-auto max-w-5xl px-4 pt-4 sm:pt-8">
+      <Link href="/memories" className="mb-4 inline-block text-sm text-brown hover:text-burgundy">
         ← All memories
       </Link>
       <Suspense fallback={<AlbumSkeleton />}>
-        <Album params={params} />
+        <Album params={params} searchParams={searchParams} />
       </Suspense>
     </div>
   );
@@ -31,67 +31,68 @@ export default function AlbumPage({ params }: PageProps<"/memories/[n]">) {
 
 function AlbumSkeleton() {
   return (
-    <div className="mt-6">
-      <div className="h-14 w-72 animate-pulse rounded-xl bg-wheat/70" />
-      <div className="mt-8 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 md:grid-cols-4">
-        {Array.from({ length: 8 }, (_, i) => (
-          <div key={i} className="aspect-square animate-pulse rounded-2xl bg-wheat/70" />
+    <div>
+      <div className="-mx-4 aspect-[4/5] max-h-[78vh] animate-pulse bg-wheat/70 sm:mx-0 sm:aspect-[16/9] sm:rounded-3xl" />
+      <div className="mt-8 grid grid-cols-3 gap-[3px] sm:grid-cols-4 lg:grid-cols-5">
+        {Array.from({ length: 6 }, (_, i) => (
+          <div key={i} className="aspect-square animate-pulse bg-wheat/70" />
         ))}
       </div>
     </div>
   );
 }
 
-async function Album({ params }: { params: PageProps<"/memories/[n]">["params"] }) {
+async function Album({
+  params,
+  searchParams,
+}: {
+  params: PageProps<"/memories/[n]">["params"];
+  searchParams: PageProps<"/memories/[n]">["searchParams"];
+}) {
   const n = parse((await params).n);
   if (n === null) notFound();
+  const { photo } = await searchParams;
 
-  const loaded = await loadPhotos();
+  const [loaded, owner] = await Promise.all([loadPhotos(), getOwner()]);
   const current = albumFor(loaded.now);
+  if (n > current) notFound();
+
   const photos = loaded.photos
     .filter((p) => albumOf(p) === n)
     .sort((a, b) => a.takenAt.localeCompare(b.takenAt));
-  if (n > current && photos.length === 0) notFound();
-
-  const { from, to } = albumRange(n);
-  const favorites = photos.filter((p) => p.favorite).length;
 
   return (
     <>
-      <header className="mt-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="eyebrow">{formatRange(from, to)}</p>
-          <h1 className="mt-2 font-display text-5xl font-semibold text-cocoa">{monthsaryTitle(n)}</h1>
-          <p className="mt-2 text-brown">
-            {n > 0 && <>{spanText(n)} together · </>}
-            {photos.length} photo{photos.length === 1 ? "" : "s"}
-            {favorites > 0 && <> · {favorites} favorite{favorites === 1 ? "" : "s"}</>}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <ButtonLink href="/memories/upload" variant="secondary">
-            Add photos
-          </ButtonLink>
-          {n > 0 && photos.length > 0 && <ButtonLink href={`/monthsary?n=${n}`}>Make the monthsary post</ButtonLink>}
-        </div>
-      </header>
+      <StorageNotice loaded={loaded} />
+      <AlbumView
+        key={n}
+        n={n}
+        photos={photos}
+        canEdit={owner !== null}
+        complete={n < current}
+        celebratingToday={celebrating(loaded.now) === n}
+        initialPhoto={typeof photo === "string" ? photo : undefined}
+      />
 
-      <div className="mt-8">
-        <StorageNotice loaded={loaded} />
-        <PhotoGrid photos={photos} />
-      </div>
-
-      <nav className="mt-10 flex justify-between text-sm">
+      <nav className="mt-12 grid grid-cols-2 gap-3 text-sm">
         {n > 0 ? (
-          <Link href={`/memories/${n - 1}`} className="text-brown hover:text-burgundy">
-            ← {monthsaryTitle(n - 1)}
+          <Link
+            href={`/memories/${n - 1}`}
+            className="rounded-2xl border border-wheat-deep/70 bg-paper/80 p-4 text-brown transition-colors hover:border-tan hover:text-burgundy"
+          >
+            <span className="block text-xs uppercase tracking-wider">← Before</span>
+            <span className="font-display text-xl font-semibold text-cocoa">{monthsaryTitle(n - 1)}</span>
           </Link>
         ) : (
           <span />
         )}
         {n < current && (
-          <Link href={`/memories/${n + 1}`} className="text-brown hover:text-burgundy">
-            {monthsaryTitle(n + 1)} →
+          <Link
+            href={`/memories/${n + 1}`}
+            className="rounded-2xl border border-wheat-deep/70 bg-paper/80 p-4 text-right text-brown transition-colors hover:border-tan hover:text-burgundy"
+          >
+            <span className="block text-xs uppercase tracking-wider">After →</span>
+            <span className="font-display text-xl font-semibold text-cocoa">{monthsaryTitle(n + 1)}</span>
           </Link>
         )}
       </nav>

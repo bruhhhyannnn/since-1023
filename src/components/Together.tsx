@@ -1,16 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { formatDate, num } from "@/lib/format";
 import {
   DAY,
-  completedMonths,
+  celebrating,
   dayNumber,
   elapsed,
-  monthsaryAt,
   monthsaryTitle,
   nextAnniversary,
   nextMonthsary,
-  sameDay,
   splitDuration,
   totals,
   upcomingMilestones,
@@ -55,23 +54,23 @@ export function LiveCounter() {
   );
 }
 
-/** "Today is day 2,589 of us" — or a little celebration on monthsary days. */
+/** "Today is day 2,589 of us", or a little celebration on monthsary days. */
 export function TodayLine() {
   const now = useNow();
   if (now === null) return <p className="h-6" />;
 
-  const done = completedMonths(now);
-  const upcoming = nextMonthsary(now);
-  let celebration: string | null = null;
-  if (done > 0 && sameDay(now, monthsaryAt(done))) celebration = `Happy ${monthsaryTitle(done)}!`;
-  else if (sameDay(now, upcoming.at)) celebration = `It's our ${monthsaryTitle(upcoming.n)} today, at 7:00 PM`;
+  // From 12:00 AM on the 23rd, all day long.
+  const today = celebrating(now);
 
   return (
     <p className="text-brown">
-      {celebration ? (
-        <span className="inline-flex items-center gap-2 rounded-full bg-burgundy px-4 py-1.5 text-sm font-medium text-cream">
-          <Heart className="beat size-3.5" /> {celebration}
-        </span>
+      {today !== null ? (
+        <Link
+          href={`/memories/${today}`}
+          className="inline-flex items-center gap-2 rounded-full bg-burgundy px-4 py-1.5 text-sm font-medium text-cream transition-colors hover:bg-burgundy-dark"
+        >
+          <Heart className="beat size-3.5" /> Happy {monthsaryTitle(today)}! See our album →
+        </Link>
       ) : (
         <>
           Today is day <span className="tabular font-semibold text-burgundy">{num(dayNumber(now))}</span> of us

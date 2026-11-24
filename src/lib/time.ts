@@ -137,7 +137,7 @@ export function ordinal(n: number): string {
 
 /** "86th Monthsary", or "7th Anniversary" every 12 months. */
 export function monthsaryTitle(n: number): string {
-  if (n <= 0) return "Day One";
+  if (n <= 0) return "Before Us";
   if (n % 12 === 0) return `${ordinal(n / 12)} Anniversary`;
   return `${ordinal(n)} Monthsary`;
 }
@@ -159,11 +159,18 @@ export function plural(n: number, word: string): string {
 /* ------------------------------------------------------------------------ *
  * Albums: one per monthsary.
  *
- * The album for the n-th monthsary holds every photo from the day after the
- * previous monthsary through the monthsary day itself (24th → 23rd), so the
- * celebration day lands in the album you post that night.
- * Album 0 ("Day One") holds Oct 23, 2019 and anything before it.
+ * The album for the n-th monthsary holds every photo from the previous
+ * monthsary day through the day before this one (23rd → 22nd). At 12:00 AM on
+ * the 23rd the album is complete: the site says "Happy monthsary" and the
+ * album is ready for its Instagram post.
+ * Album 0 ("Before Us") holds anything from before Oct 23, 2019.
  * ------------------------------------------------------------------------ */
+
+/** Midnight (Philippine time) at the start of the calendar day of `ms`. */
+export function startOfDay(ms: number): number {
+  const w = toWall(ms);
+  return fromWall({ year: w.year, month: w.month, day: w.day });
+}
 
 /** The album number for a photo taken at `ms`. */
 export function albumFor(ms: number): number {
@@ -171,17 +178,25 @@ export function albumFor(ms: number): number {
   const k = (w.year - US.start.year) * 12 + (w.month - US.start.month);
   if (k < 0) return 0;
   const monthsaryDay = toWall(monthsaryAt(k)).day;
-  return w.day <= monthsaryDay ? k : k + 1;
+  return w.day >= monthsaryDay ? k + 1 : k;
 }
 
-/** First and last calendar day (as noon instants, for display) of an album. */
+/** 12:00 AM on the n-th monthsary day: the moment album n is complete. */
+export function albumReadyAt(n: number): number {
+  return startOfDay(monthsaryAt(n));
+}
+
+/** First and last calendar day of an album (as noon instants, for display). */
 export function albumRange(n: number): { from: number | null; to: number } {
-  const end = toWall(monthsaryAt(n));
-  const to = fromWall({ year: end.year, month: end.month, day: end.day, hour: 12 });
+  const to = albumReadyAt(n) - 12 * HOUR;
   if (n <= 0) return { from: null, to };
-  const prev = toWall(monthsaryAt(n - 1));
-  const from = fromWall({ year: prev.year, month: prev.month, day: prev.day + 1, hour: 12 });
-  return { from, to };
+  return { from: albumReadyAt(n - 1) + 12 * HOUR, to };
+}
+
+/** The monthsary being celebrated today (the whole 23rd, from 12:00 AM), if any. */
+export function celebrating(now: number): number | null {
+  const n = albumFor(now) - 1;
+  return n >= 1 && sameDay(now, monthsaryAt(n)) ? n : null;
 }
 
 /** True when `a` and `b` fall on the same Philippine calendar day. */

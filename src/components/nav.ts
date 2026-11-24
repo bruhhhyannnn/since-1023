@@ -1,7 +1,7 @@
 export const NAV_LINKS = [
-  { href: "/", label: "Us" },
-  { href: "/memories", label: "Memories" },
-  { href: "/monthsary", label: "Make a post" },
+  { href: "/", label: "Us", ownerOnly: false },
+  { href: "/memories", label: "Memories", ownerOnly: false },
+  { href: "/monthsary", label: "Make a post", ownerOnly: true },
 ];
 
 export const NAV_LINK_CLASS =

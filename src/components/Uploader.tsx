@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { FULL_SIDE, THUMB_SIDE, readTakenAt, resizeToJpeg, type Jpeg } from "@/lib/image";
 import { LIMITS } from "@/lib/photos";
 import { albumFor, fromInputValue, monthsaryTitle, toInputValue } from "@/lib/time";
 import { Heart } from "./Heart";
-import { useAuthedFetch } from "./PasscodeProvider";
 import { buttonStyles } from "./ui";
 
 type Item = {
@@ -21,6 +20,15 @@ type Item = {
   error?: string;
 };
 
+const noop = () => () => {};
+/** False until the page is interactive, so photos picked too early aren't silently dropped. */
+const useReady = () =>
+  useSyncExternalStore(
+    noop,
+    () => true,
+    () => false,
+  );
+
 const isImage = (f: File) => f.type.startsWith("image/") || /\.(heic|heif|jpe?g|png|webp)$/i.test(f.name);
 
 export function Uploader() {
@@ -28,9 +36,10 @@ export function Uploader() {
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [lastAlbum, setLastAlbum] = useState<number | null>(null);
-  const request = useAuthedFetch();
+  const [signedOut, setSignedOut] = useState(false);
   const router = useRouter();
   const previews = useRef<string[]>([]);
+  const ready = useReady();
 
   useEffect(() => () => previews.current.forEach((u) => URL.revokeObjectURL(u)), []);
 
@@ -61,6 +70,7 @@ export function Uploader() {
 
   async function uploadAll() {
     setBusy(true);
+    setSignedOut(false);
     const queue = items.filter((i) => i.thumb && (i.status === "ready" || i.status === "error"));
     let uploadedTo: number | null = null;
 
@@ -76,10 +86,10 @@ export function Uploader() {
         form.append("width", String(full.width));
         form.append("height", String(full.height));
 
-        const res = await request("/api/photos", { method: "POST", body: form });
-        if (!res) {
-          // Passcode prompt was closed: stop here, keep everything as it was.
+        const res = await fetch("/api/photos", { method: "POST", body: form });
+        if (res.status === 401) {
           update(item.key, { status: "ready" });
+          setSignedOut(true);
           break;
         }
         if (!res.ok) {
@@ -122,14 +132,14 @@ export function Uploader() {
         }`}
       >
         <Heart className="size-7 text-burgundy" />
-        <span className="mt-3 font-display text-2xl font-semibold text-cocoa">Choose photos</span>
+        <span className="mt-3 font-display text-2xl font-semibold text-cocoa">{ready ? "Choose photos" : "Getting ready…"}</span>
         <span className="mt-1 text-sm text-brown">or drop them here. Pick as many as you like.</span>
         <input
           type="file"
           accept="image/*"
           multiple
           className="sr-only"
-          disabled={busy}
+          disabled={busy || !ready}
           onChange={(e) => {
             addFiles(e.target.files);
             e.target.value = "";
@@ -149,6 +159,16 @@ export function Uploader() {
             />
           ))}
         </ul>
+      )}
+
+      {signedOut && (
+        <p role="alert" className="mt-6 rounded-2xl border border-rose/40 bg-paper p-4 text-sm text-rose">
+          You were signed out, so nothing else was added.{" "}
+          <Link href="/login?next=/memories/upload" className="font-medium underline underline-offset-4">
+            Sign in again
+          </Link>{" "}
+          and your photos will still be here to add.
+        </p>
       )}
 
       {(pending > 0 || reading || allDone) && (

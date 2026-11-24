@@ -24,12 +24,13 @@ const unconfigured: PhotoStore = {
 let cached: PhotoStore | undefined;
 
 /**
- * Supabase when its settings are present; otherwise a local folder while
- * developing. On Vercel without settings, photos are simply turned off.
+ * Supabase when its settings are present. Without the secret key, photos go
+ * in a local folder while developing (handy for testing without touching the
+ * real albums). On Vercel without settings, photos are simply turned off.
  */
 export function getStore(): PhotoStore {
   if (cached) return cached;
-  const url = process.env.SUPABASE_URL;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SECRET_KEY;
   if (url && key) cached = supabaseStore(url, key);
   else if (process.env.VERCEL) cached = unconfigured;

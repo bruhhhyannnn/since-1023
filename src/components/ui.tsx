@@ -53,8 +53,7 @@ export function StorageNotice({ loaded }: { loaded: Loaded }) {
       <div className="rounded-3xl border border-dashed border-tan bg-paper/70 p-6 text-sm text-brown">
         <p className="font-medium text-cocoa">Photo storage isn&apos;t connected yet.</p>
         <p className="mt-1">
-          Add <code>SUPABASE_URL</code>, <code>SUPABASE_SECRET_KEY</code> and <code>UPLOAD_PASSCODE</code> in
-          Vercel, then redeploy. The README walks through it.
+          Add the Supabase settings in Vercel, then redeploy. The README walks through it.
         </p>
       </div>
     );
