@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import type { Photo, PhotoPatch } from "@/lib/photos";
+import { describeKey, explainRls } from "./key";
 import type { NewPhoto, PhotoStore } from "./types";
 
 const BUCKET = "photos";
@@ -19,6 +20,8 @@ type Row = {
 };
 
 export function supabaseStore(url: string, secretKey: string): PhotoStore {
+  const keyKind = describeKey(secretKey);
+  const fail = (what: string, message: string) => new Error(`${what}: ${explainRls(message, keyKind)}`);
   const db = createClient(url, secretKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -45,7 +48,7 @@ export function supabaseStore(url: string, secretKey: string): PhotoStore {
         .from(TABLE)
         .select("*")
         .order("taken_at", { ascending: false });
-      if (error) throw new Error(`Could not load photos: ${error.message}`);
+      if (error) throw fail("Could not load photos", error.message);
       return (data as Row[]).map(toPhoto);
     },
 
@@ -56,11 +59,11 @@ export function supabaseStore(url: string, secretKey: string): PhotoStore {
       const options = { contentType: "image/jpeg", cacheControl: "31536000", upsert: false };
 
       const full = await bucket().upload(path, input.full, options);
-      if (full.error) throw new Error(`Upload failed: ${full.error.message}`);
+      if (full.error) throw fail("Upload failed", full.error.message);
       const thumb = await bucket().upload(thumbPath, input.thumb, options);
       if (thumb.error) {
         await bucket().remove([path]);
-        throw new Error(`Upload failed: ${thumb.error.message}`);
+        throw fail("Upload failed", thumb.error.message);
       }
 
       const { data, error } = await db
@@ -78,7 +81,7 @@ export function supabaseStore(url: string, secretKey: string): PhotoStore {
         .single();
       if (error) {
         await bucket().remove([path, thumbPath]);
-        throw new Error(`Could not save photo: ${error.message}`);
+        throw fail("Could not save photo", error.message);
       }
       return toPhoto(data as Row);
     },
@@ -94,13 +97,13 @@ export function supabaseStore(url: string, secretKey: string): PhotoStore {
         .eq("id", id)
         .select()
         .maybeSingle();
-      if (error) throw new Error(`Could not update photo: ${error.message}`);
+      if (error) throw fail("Could not update photo", error.message);
       return data ? toPhoto(data as Row) : null;
     },
 
     async remove(id: string) {
       const { data, error } = await db.from(TABLE).delete().eq("id", id).select().maybeSingle();
-      if (error) throw new Error(`Could not delete photo: ${error.message}`);
+      if (error) throw fail("Could not delete photo", error.message);
       if (!data) return false;
       const row = data as Row;
       await bucket().remove([row.path, row.thumb_path]);

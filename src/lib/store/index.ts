@@ -1,4 +1,5 @@
 import "server-only";
+import { describeKey, keyProblem } from "./key";
 import { localStore } from "./local";
 import { supabaseStore } from "./supabase";
 import { StoreNotConfiguredError, type PhotoStore } from "./types";
@@ -21,6 +22,14 @@ const unconfigured: PhotoStore = {
   ping: async () => {},
 };
 
+/** Supabase is set up, but with a key that can't save photos: say exactly how to fix it. */
+function misconfigured(problem: string): PhotoStore {
+  const fail = async (): Promise<never> => {
+    throw new Error(problem);
+  };
+  return { kind: "supabase", list: fail, create: fail, update: fail, remove: fail, ping: fail };
+}
+
 let cached: PhotoStore | undefined;
 
 /**
@@ -30,9 +39,11 @@ let cached: PhotoStore | undefined;
  */
 export function getStore(): PhotoStore {
   if (cached) return cached;
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SECRET_KEY;
-  if (url && key) cached = supabaseStore(url, key);
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const key = process.env.SUPABASE_SECRET_KEY?.trim();
+  const problem = key ? keyProblem(describeKey(key)) : null;
+  if (url && key && problem) cached = misconfigured(problem);
+  else if (url && key) cached = supabaseStore(url, key);
   else if (process.env.VERCEL) cached = unconfigured;
   else cached = localStore();
   return cached;
