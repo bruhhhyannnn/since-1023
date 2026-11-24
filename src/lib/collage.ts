@@ -21,8 +21,8 @@ const C = {
   cocoa: "#3d2b22",
   burgundy: "#7a1f2e",
 };
-const DISPLAY = '"Cormorant Garamond Variable", "Cormorant Garamond", Georgia, serif';
-const SANS = '"DM Sans Variable", "DM Sans", system-ui, sans-serif';
+export const DISPLAY = '"Cormorant Garamond Variable", "Cormorant Garamond", Georgia, serif';
+export const SANS = '"DM Sans Variable", "DM Sans", system-ui, sans-serif';
 
 export type PostContent = {
   format: PostFormat;
@@ -42,6 +42,7 @@ export async function loadPostFonts(): Promise<void> {
     document.fonts.load(`italic 600 96px ${DISPLAY}`, "Monthsary 0123456789"),
     document.fonts.load(`italic 500 40px ${DISPLAY}`, "together"),
     document.fonts.load(`500 26px ${SANS}`, "BRYAN & CECILIA 0123456789."),
+    document.fonts.load(`800 64px ${SANS}`, "WRAPPED 0123456789"),
   ]).catch(() => undefined);
 }
 
@@ -66,7 +67,7 @@ export function loadImage(url: string): Promise<HTMLImageElement> {
 
 type Rect = { x: number; y: number; w: number; h: number };
 
-function roundRect(ctx: CanvasRenderingContext2D, { x, y, w, h }: Rect, r: number) {
+export function roundRect(ctx: CanvasRenderingContext2D, { x, y, w, h }: Rect, r: number) {
   const rr = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
   ctx.moveTo(x + rr, y);
@@ -77,7 +78,7 @@ function roundRect(ctx: CanvasRenderingContext2D, { x, y, w, h }: Rect, r: numbe
   ctx.closePath();
 }
 
-function heartPath(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number) {
+export function heartPath(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number) {
   const s = size / 24;
   const x = cx - 12 * s;
   const y = cy - 12.5 * s;
@@ -93,7 +94,7 @@ function heartPath(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: 
 }
 
 /** Centered text with letter spacing (drawn per character; works in every browser). */
-function spacedText(ctx: CanvasRenderingContext2D, text: string, cx: number, y: number, spacing: number) {
+export function spacedText(ctx: CanvasRenderingContext2D, text: string, cx: number, y: number, spacing: number) {
   const chars = [...text];
   const widths = chars.map((ch) => ctx.measureText(ch).width);
   const total = widths.reduce((a, b) => a + b, 0) + spacing * (chars.length - 1);
@@ -108,7 +109,7 @@ function spacedText(ctx: CanvasRenderingContext2D, text: string, cx: number, y: 
 }
 
 /** Largest font size (down to `min`) at which `text` fits in `maxWidth`. */
-function fit(ctx: CanvasRenderingContext2D, text: string, font: (size: number) => string, size: number, maxWidth: number, min = 18) {
+export function fit(ctx: CanvasRenderingContext2D, text: string, font: (size: number) => string, size: number, maxWidth: number, min = 18) {
   let s = size;
   ctx.font = font(s);
   while (ctx.measureText(text).width > maxWidth && s > min) {
@@ -119,7 +120,7 @@ function fit(ctx: CanvasRenderingContext2D, text: string, font: (size: number) =
 }
 
 /** Draw `img` to fill `r`, cropping the overflow (a bit above center, where faces usually are). */
-function drawCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, r: Rect, radius: number) {
+export function drawCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, r: Rect, radius: number) {
   const iw = img.naturalWidth;
   const ih = img.naturalHeight;
   const scale = Math.max(r.w / iw, r.h / ih);
@@ -263,4 +264,23 @@ export function canvasToJpeg(canvas: HTMLCanvasElement): Promise<Blob> {
   return new Promise((resolve, reject) =>
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Couldn't create the image."))), "image/jpeg", 0.93),
   );
+}
+
+/** Share an image (phone share sheet, e.g. to Instagram), or download it where sharing isn't available. */
+export async function shareOrDownload(blob: Blob, fileName: string, title: string): Promise<void> {
+  const file = new File([blob], fileName, { type: "image/jpeg" });
+  if (typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title });
+      return;
+    } catch (err) {
+      if ((err as Error).name === "AbortError") return;
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }

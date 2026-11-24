@@ -6,10 +6,11 @@ import { useState } from "react";
 import { groupByDay, keyPhoto } from "@/lib/albums";
 import { formatDate, formatRange } from "@/lib/format";
 import type { Photo, PhotoPatch } from "@/lib/photos";
-import { albumRange, albumReadyAt, monthsaryTitle, spanText, toWall } from "@/lib/time";
+import { albumRange, albumReadyAt, monthsaryTitle, ordinal, spanText, toWall } from "@/lib/time";
+import { wrapMonth, wrapYear, type Wrap } from "@/lib/wrapped";
 import { Heart } from "./Heart";
-import { Slideshow } from "./Slideshow";
 import { Viewer } from "./Viewer";
+import { Wrapped } from "./Wrapped";
 
 type Props = {
   n: number;
@@ -18,17 +19,23 @@ type Props = {
   complete: boolean;
   celebratingToday: boolean;
   initialPhoto?: string;
+  /** Request time, for "next up" in the story. */
+  now: number;
+  /** On anniversary albums: every photo from that year, for the Year Wrapped. */
+  yearPhotos?: Photo[];
+  /** Open the Wrapped story right away (links from the monthsary banner). */
+  autoplay?: boolean;
 };
 
 /** One monthsary album, presented like the Photos app. */
-export function AlbumView({ n, photos, canEdit, complete, celebratingToday, initialPhoto }: Props) {
+export function AlbumView({ n, photos, canEdit, complete, celebratingToday, initialPhoto, now, yearPhotos, autoplay }: Props) {
   const router = useRouter();
   const [overrides, setOverrides] = useState<Record<string, Partial<Photo>>>({});
   const [removed, setRemoved] = useState<Set<string>>(() => new Set());
   const [openId, setOpenId] = useState<string | null>(
     initialPhoto && photos.some((p) => p.id === initialPhoto) ? initialPhoto : null,
   );
-  const [playing, setPlaying] = useState(false);
+  const [wrap, setWrap] = useState<Wrap | null>(() => (autoplay && photos.length > 0 ? wrapMonth(n, photos) : null));
   const [error, setError] = useState<string | null>(null);
 
   const shown = photos.filter((p) => !removed.has(p.id)).map((p) => ({ ...p, ...overrides[p.id] }));
@@ -36,6 +43,7 @@ export function AlbumView({ n, photos, canEdit, complete, celebratingToday, init
   const cover = keyPhoto(shown);
   const favorites = shown.filter((p) => p.favorite).length;
   const days = groupByDay(shown);
+  const years = n > 0 && n % 12 === 0 && yearPhotos?.length ? n / 12 : null;
 
   const title = monthsaryTitle(n);
   const { from, to } = albumRange(n);
@@ -120,13 +128,25 @@ export function AlbumView({ n, photos, canEdit, complete, celebratingToday, init
               {shown.length > 0 && (
                 <button
                   type="button"
-                  onClick={() => setPlaying(true)}
+                  onClick={() => setWrap(wrapMonth(n, shown))}
                   className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-medium text-cocoa transition-colors hover:bg-cream"
                 >
                   <svg viewBox="0 0 24 24" className="size-4" aria-hidden="true">
                     <path d="M7 4.5v15l12-7.5z" fill="currentColor" />
                   </svg>
-                  Play
+                  Watch our Wrapped
+                </button>
+              )}
+              {years && (
+                <button
+                  type="button"
+                  onClick={() => setWrap(wrapYear(years, yearPhotos!))}
+                  className="inline-flex items-center gap-2 rounded-full bg-burgundy px-5 py-2.5 text-sm font-medium text-cream transition-colors hover:bg-burgundy-dark"
+                >
+                  <svg viewBox="0 0 24 24" className="size-4" aria-hidden="true">
+                    <path d="M7 4.5v15l12-7.5z" fill="currentColor" />
+                  </svg>
+                  Our {ordinal(years)} year, Wrapped
                 </button>
               )}
               {canEdit && complete && shown.length > 0 && (
@@ -216,14 +236,7 @@ export function AlbumView({ n, photos, canEdit, complete, celebratingToday, init
         />
       )}
 
-      {playing && (
-        <Slideshow
-          photos={shown}
-          title={title}
-          subtitle={range}
-          onClose={() => setPlaying(false)}
-        />
-      )}
+      {wrap && <Wrapped wrap={wrap} now={now} complete={complete} onClose={() => setWrap(null)} />}
     </>
   );
 }

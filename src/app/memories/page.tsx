@@ -74,7 +74,17 @@ async function Albums() {
         <StorageNotice loaded={loaded} />
 
         {featured !== undefined && (
-          <FeaturedAlbum n={featured} photos={groups.get(featured)!} label={featuredLabel} celebrating={today === featured} />
+          <div>
+            <FeaturedAlbum n={featured} photos={groups.get(featured)!} label={featuredLabel} celebrating={today === featured} />
+            <div className="mt-4 flex justify-center sm:justify-start">
+              <ButtonLink href={`/memories/${featured}?wrapped=1`}>
+                <svg viewBox="0 0 24 24" className="size-4" aria-hidden="true">
+                  <path d="M7 4.5v15l12-7.5z" fill="currentColor" />
+                </svg>
+                Watch our {monthsaryTitle(featured)} Wrapped
+              </ButtonLink>
+            </div>
+          </div>
         )}
 
         {tiles.length === 0 && !loaded.error && loaded.kind !== "none" && (

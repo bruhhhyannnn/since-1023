@@ -51,7 +51,7 @@ async function Album({
 }) {
   const n = parse((await params).n);
   if (n === null) notFound();
-  const { photo } = await searchParams;
+  const { photo, wrapped } = await searchParams;
 
   const [loaded, owner] = await Promise.all([loadPhotos(), getOwner()]);
   const current = albumFor(loaded.now);
@@ -72,6 +72,9 @@ async function Album({
         complete={n < current}
         celebratingToday={celebrating(loaded.now) === n}
         initialPhoto={typeof photo === "string" ? photo : undefined}
+        now={loaded.now}
+        yearPhotos={n > 0 && n % 12 === 0 ? loaded.photos.filter((p) => albumOf(p) > n - 12 && albumOf(p) <= n) : undefined}
+        autoplay={wrapped === "1"}
       />
 
       <nav className="mt-12 grid grid-cols-2 gap-3 text-sm">

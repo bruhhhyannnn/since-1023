@@ -66,10 +66,10 @@ export function TodayLine() {
     <p className="text-brown">
       {today !== null ? (
         <Link
-          href={`/memories/${today}`}
+          href={`/memories/${today}?wrapped=1`}
           className="inline-flex items-center gap-2 rounded-full bg-burgundy px-4 py-1.5 text-sm font-medium text-cream transition-colors hover:bg-burgundy-dark"
         >
-          <Heart className="beat size-3.5" /> Happy {monthsaryTitle(today)}! See our album →
+          <Heart className="beat size-3.5" /> Happy {monthsaryTitle(today)}! Watch our Wrapped →
         </Link>
       ) : (
         <>

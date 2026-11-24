@@ -6,7 +6,16 @@ Our little corner of the internet. Bryan & Cecilia, together since **Wednesday, 
 
 - **Live counter.** Years, months, days, hours, minutes and seconds since exactly 7:00 PM on Oct 23, 2019, ticking every second. It always counts in Philippine time, so it reads the same on every phone.
 - **Countdowns** to the next monthsary and the next anniversary, plus fun milestones like 2,600 days or 250 million seconds together.
-- **Memories,** presented like the Photos app. Each monthsary gets an album with a full-size cover photo and the photos grouped by day. Favorites are shown bigger. The viewer is swipeable, and **Play** runs a slideshow of the album.
+- **Memories,** presented like the Photos app. Each monthsary gets an album with a full-size cover photo and the photos grouped by day. Favorites are shown bigger, and the viewer is swipeable.
+- **Our Wrapped.** Every album has a tap-through story of its month. Tap the right side to go on, the left to go back, and hold to pause. It covers:
+  - how long the month was, in minutes
+  - how many moments we saved
+  - our most-photographed day
+  - the time of day and the day of the week we take the most photos
+  - our favorites and a caption in our own words
+  - a photo montage and what's next
+  - a summary card to save for an Instagram story
+- **Year Wrapped.** Every anniversary album also has a story for the whole year, including our biggest month. On monthsary days, the home banner opens that month's Wrapped.
 - **Monthsary post maker.** Pick a monthsary and its photos (favorites are picked for you) and it lays them out with our names and dates. Sizes: Instagram post (1080×1350) and story (1080×1920). Share it straight to Instagram from your phone, or download it.
 
 ### How albums work
@@ -75,5 +84,6 @@ npm run build
 
 - `src/proxy.ts` keeps an owner's session fresh and turns visitors away from the owner-only pages. `src/lib/auth.ts` decides who counts as an owner.
 - Photos are resized on the phone before uploading (max 2048px, plus a 640px thumbnail), so uploads are quick and the free 1 GB lasts for years.
-- The Instagram image is drawn in the browser on a `<canvas>`, so there's no server cost.
+- The Instagram image and the Wrapped summary card are drawn in the browser on a `<canvas>`, so there's no server cost.
+- The Wrapped numbers are worked out in [`src/lib/wrapped.ts`](src/lib/wrapped.ts) (tested in `wrapped.test.ts`), and the story itself is in [`src/components/Wrapped.tsx`](src/components/Wrapped.tsx).
 - All date math lives in [`src/lib/time.ts`](src/lib/time.ts), and [`src/lib/time.test.ts`](src/lib/time.test.ts) tests it.
