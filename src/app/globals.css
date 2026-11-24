@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+/*
+ * Our colors: wheat and light brown, with burgundy for the things that matter.
+ * Used as bg-cream, text-burgundy, border-wheat-deep, etc.
+ */
+@theme {
+  --color-cream: #fbf6ec;
+  --color-paper: #fffcf6;
+  --color-wheat: #f3e4c4;
+  --color-wheat-deep: #e5cd9f;
+  --color-tan: #c9a47a;
+  --color-brown: #7a5c40;
+  --color-cocoa: #3d2b22;
+  --color-burgundy: #7a1f2e;
+  --color-burgundy-dark: #5b1522;
+  --color-rose: #a33a4c;
+
+  --font-display: "Cormorant Garamond Variable", "Cormorant Garamond", Georgia, serif;
+  --font-sans: "DM Sans Variable", "DM Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--color-cream);
+  color: var(--color-cocoa);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-burgundy) 20%, transparent);
+}
+
+/* Numbers that tick shouldn't wiggle. */
+.tabular {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* Small caps-style labels. */
+.eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--color-brown);
+}
+
+/* Soft paper grain on the page background. */
+.paper {
+  background-image:
+    radial-gradient(circle at 20% 0%, color-mix(in srgb, var(--color-wheat) 70%, transparent) 0, transparent 45%),
+    radial-gradient(circle at 100% 30%, color-mix(in srgb, var(--color-wheat) 50%, transparent) 0, transparent 40%);
+  background-repeat: no-repeat;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .beat {
+    animation: beat 2.4s ease-in-out infinite;
+  }
+  @keyframes beat {
+    0%, 100% { transform: scale(1); }
+    12% { transform: scale(1.14); }
+    24% { transform: scale(1); }
+    36% { transform: scale(1.1); }
+    48% { transform: scale(1); }
+  }
+}
