@@ -1,10 +1,11 @@
+import { Images, ImagePlus, Play, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Heart } from "@/components/Heart";
 import { FadeImg } from "@/components/motion/FadeImg";
 import { PageTransition } from "@/components/motion/PageTransition";
-import { ButtonLink, StorageNotice } from "@/components/ui";
+import { ButtonLink, EmptyState, StorageNotice } from "@/components/ui";
 import { groupByAlbum, keyPhoto } from "@/lib/albums";
 import { getOwner } from "@/lib/auth";
 import { loadPhotos } from "@/lib/data";
@@ -69,11 +70,16 @@ async function Albums() {
   return (
     <div className="mt-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-brown">
+        <p className="inline-flex items-center gap-2 text-brown">
+          <Images aria-hidden="true" className="size-4 text-tan" />
           {loaded.photos.length} photo{loaded.photos.length === 1 ? "" : "s"} · {withPhotos.length} album
           {withPhotos.length === 1 ? "" : "s"}
         </p>
-        {owner && <ButtonLink href="/memories/upload">Add photos</ButtonLink>}
+        {owner && (
+          <ButtonLink href="/memories/upload" icon={ImagePlus}>
+            Add photos
+          </ButtonLink>
+        )}
       </div>
 
       <div className="mt-6 space-y-6">
@@ -83,10 +89,7 @@ async function Albums() {
           <div className="enter" style={{ "--d": "120ms" } as React.CSSProperties}>
             <FeaturedAlbum n={featured} photos={groups.get(featured)!} label={featuredLabel} celebrating={today === featured} />
             <div className="mt-4 flex justify-center sm:justify-start">
-              <ButtonLink href={`/memories/${featured}?wrapped=1`}>
-                <svg viewBox="0 0 24 24" className="size-4" aria-hidden="true">
-                  <path d="M7 4.5v15l12-7.5z" fill="currentColor" />
-                </svg>
+              <ButtonLink href={`/memories/${featured}?wrapped=1`} icon={Play}>
                 Watch our {monthsaryTitle(featured)} Wrapped
               </ButtonLink>
             </div>
@@ -94,11 +97,10 @@ async function Albums() {
         )}
 
         {tiles.length === 0 && !loaded.error && loaded.kind !== "none" && (
-          <div className="rounded-3xl border border-dashed border-tan bg-paper/70 px-6 py-14 text-center">
-            <Heart className="mx-auto size-6 text-burgundy" />
-            <p className="mt-3 font-display text-2xl font-semibold text-cocoa">Our albums will live here</p>
-            <p className="mt-1 text-sm text-brown">One for every monthsary, filled with our favorite pictures.</p>
-          </div>
+          <EmptyState icon={Images} title="Our albums will live here">
+            One for every monthsary, filled with our favorite pictures.
+          </EmptyState>
+          
         )}
       </div>
 
@@ -173,7 +175,7 @@ function AlbumTile({ n, photos, isCurrent }: { n: number; photos: Photo[]; isCur
         ) : (
           <div className="grid size-full place-items-center text-center text-sm text-brown">
             <div>
-              <Heart className="mx-auto size-6 text-tan" />
+              <Plus aria-hidden="true" className="mx-auto size-6 text-tan" />
               <p className="mt-2">Add this month&apos;s photos</p>
             </div>
           </div>

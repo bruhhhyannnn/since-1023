@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, Copy, Download, MessageSquareHeart, RectangleVertical, Share, Smartphone } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { groupByAlbum } from "@/lib/albums";
 import { MAX_PHOTOS, POST_SIZES, canvasToJpeg, loadImage, loadPostFonts, renderPost, type PostFormat } from "@/lib/collage";
@@ -8,7 +9,8 @@ import type { Photo } from "@/lib/photos";
 import { START, albumRange, monthsaryAt, monthsaryTitle, spanText } from "@/lib/time";
 import { COUPLE, US } from "@/lib/us";
 import { Heart } from "./Heart";
-import { buttonStyles } from "./ui";
+import { FadeImg } from "./motion/FadeImg";
+import { Button, Picker, Segmented, Switch, TextField } from "./ui";
 
 const noop = () => () => {};
 const useCanShare = () =>
@@ -153,13 +155,13 @@ export function PostMaker({ photos, initialN, maxN }: { photos: Photo[]; initial
         </div>
         <div className="mx-auto mt-4 flex max-w-md flex-wrap justify-center gap-2">
           {canShare && (
-            <button type="button" onClick={share} className={buttonStyles.primary}>
+            <Button icon={Share} onClick={share}>
               Share to Instagram
-            </button>
+            </Button>
           )}
-          <button type="button" onClick={download} className={canShare ? buttonStyles.secondary : buttonStyles.primary}>
+          <Button icon={Download} variant={canShare ? "secondary" : "primary"} onClick={download}>
             Download
-          </button>
+          </Button>
         </div>
         {status && (
           <p role="status" className="mt-3 text-center text-sm text-rose">
@@ -170,60 +172,41 @@ export function PostMaker({ photos, initialN, maxN }: { photos: Photo[]; initial
 
       {/* Controls */}
       <div className="space-y-7">
-        <div>
-          <label htmlFor="which" className="eyebrow">
-            Which monthsary
-          </label>
-          <select
-            id="which"
-            value={n}
-            onChange={(e) => choose(Number(e.target.value))}
-            className="mt-2 w-full rounded-xl border border-wheat-deep bg-paper px-3 py-2.5 text-cocoa outline-none focus:border-burgundy"
-          >
-            {options.map((m) => {
-              const r = albumRange(m);
-              const count = albums.get(m)?.length ?? 0;
-              return (
-                <option key={m} value={m}>
-                  {monthsaryTitle(m)} · {formatRange(r.from, r.to)}
-                  {count ? ` · ${count} photo${count === 1 ? "" : "s"}` : ""}
-                </option>
-              );
-            })}
-          </select>
-        </div>
+        <Picker
+          label="Which monthsary"
+          value={n}
+          onChange={choose}
+          options={options.map((m) => {
+            const r = albumRange(m);
+            const count = albums.get(m)?.length ?? 0;
+            return {
+              value: m,
+              label: monthsaryTitle(m),
+              description: formatRange(r.from, r.to),
+              meta: count ? `${count} photo${count === 1 ? "" : "s"}` : undefined,
+            };
+          })}
+        />
 
-        <fieldset>
-          <legend className="eyebrow">Size</legend>
-          <div className="mt-2 inline-flex rounded-full border border-wheat-deep bg-paper p-1">
-            {(Object.keys(POST_SIZES) as PostFormat[]).map((f) => (
-              <button
-                key={f}
-                type="button"
-                onClick={() => setFormat(f)}
-                aria-pressed={format === f}
-                className="rounded-full px-4 py-1.5 text-sm text-brown aria-pressed:bg-burgundy aria-pressed:text-cream"
-              >
-                {POST_SIZES[f].label}
-              </button>
-            ))}
-          </div>
-        </fieldset>
+        <div>
+          <span className="mb-1.5 block text-sm font-medium text-brown">Size</span>
+          <Segmented
+            label="Size"
+            value={format}
+            onChange={setFormat}
+            options={[
+              { value: "post", label: POST_SIZES.post.label, icon: RectangleVertical },
+              { value: "story", label: POST_SIZES.story.label, icon: Smartphone },
+            ]}
+          />
+        </div>
 
         <div>
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <p className="eyebrow">
-              Photos · {selected.length}/{MAX_PHOTOS}
+            <p className="text-sm font-medium text-brown">
+              Photos <span className="tabular text-burgundy">{selected.length}</span>/{MAX_PHOTOS}
             </p>
-            <label className="flex items-center gap-2 text-sm text-brown">
-              <input
-                type="checkbox"
-                checked={everything}
-                onChange={(e) => setEverything(e.target.checked)}
-                className="accent-burgundy"
-              />
-              Show photos from every month
-            </label>
+            <Switch checked={everything} onChange={setEverything} label="Every month" />
           </div>
           {choices.length === 0 ? (
             <p className="mt-3 rounded-2xl border border-dashed border-tan bg-paper/70 p-5 text-sm text-brown">
@@ -240,16 +223,16 @@ export function PostMaker({ photos, initialN, maxN }: { photos: Photo[]; initial
                       onClick={() => toggle(p.id)}
                       aria-pressed={order >= 0}
                       aria-label={`${order >= 0 ? "Remove" : "Add"} photo from ${formatDate(Date.parse(p.takenAt))}`}
-                      className="relative block aspect-square w-full overflow-hidden rounded-xl bg-wheat outline-offset-2 aria-pressed:outline-3 aria-pressed:outline-burgundy"
+                      className="press relative block aspect-square w-full overflow-hidden rounded-xl bg-wheat outline-offset-2 transition-[outline-color] aria-pressed:outline-3 aria-pressed:outline-burgundy"
                     >
-                      <img
+                      <FadeImg
                         src={p.thumbUrl}
                         alt=""
                         loading="lazy"
-                        className={`size-full object-cover transition-opacity ${order >= 0 ? "" : "opacity-70 hover:opacity-100"}`}
+                        className={`size-full object-cover ${order >= 0 ? "scale-[0.92] rounded-lg" : "opacity-75 hover:opacity-100"}`}
                       />
                       {order >= 0 && (
-                        <span className="absolute left-1.5 top-1.5 grid size-6 place-items-center rounded-full bg-burgundy text-xs font-semibold text-cream">
+                        <span className="pop-in absolute left-1.5 top-1.5 grid size-6 place-items-center rounded-full bg-burgundy text-xs font-semibold text-cream shadow">
                           {order + 1}
                         </span>
                       )}
@@ -263,27 +246,21 @@ export function PostMaker({ photos, initialN, maxN }: { photos: Photo[]; initial
           <p className="mt-2 text-xs text-brown">Tap photos in the order you want them. Favorites are picked for you.</p>
         </div>
 
-        <div>
-          <label htmlFor="message" className="eyebrow">
-            A little message (optional)
-          </label>
-          <input
-            id="message"
-            type="text"
-            value={message}
-            maxLength={60}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Forever starts with you"
-            className="mt-2 w-full rounded-xl border border-wheat-deep bg-paper px-3 py-2.5 text-cocoa outline-none placeholder:text-tan focus:border-burgundy"
-          />
-        </div>
+        <TextField
+          label="A little message (optional)"
+          icon={MessageSquareHeart}
+          value={message}
+          maxLength={60}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Forever starts with you"
+        />
 
         <div className="rounded-2xl border border-wheat-deep/70 bg-paper/80 p-4">
           <p className="eyebrow">Caption idea</p>
           <p className="mt-2 select-all text-cocoa">{caption}</p>
-          <button type="button" onClick={copyCaption} className={`${buttonStyles.ghost} -ml-3 mt-1 px-3`}>
-            {copied ? "Copied!" : "Copy caption"}
-          </button>
+          <Button variant="ghost" size="sm" icon={copied ? Check : Copy} onClick={copyCaption} className="-ml-3 mt-2">
+            {copied ? "Copied" : "Copy caption"}
+          </Button>
         </div>
       </div>
     </div>

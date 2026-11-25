@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { ChevronLeft, ImagePlus, Sparkles } from "lucide-react";
 import { Suspense } from "react";
 import { Heart } from "@/components/Heart";
 import { LoginForm } from "@/components/LoginForm";
 import { SignOutButton } from "@/components/SignOutButton";
-import { ButtonLink } from "@/components/ui";
+import { BackLink, ButtonLink } from "@/components/ui";
 import { PageTransition } from "@/components/motion/PageTransition";
 import { getOwner } from "@/lib/auth";
 
@@ -19,15 +19,19 @@ export default function LoginPage() {
     <PageTransition>
       <div className="mx-auto flex min-h-[65vh] max-w-sm flex-col justify-center px-4 py-12">
         <div className="rounded-3xl border border-wheat-deep bg-paper/90 p-7 text-center shadow-xl shadow-wheat-deep/30">
-          <Heart className="mx-auto size-7 text-burgundy" />
+          <span className="mx-auto grid size-14 place-items-center rounded-full bg-wheat text-burgundy">
+            <Heart className="beat size-6" />
+          </span>
           <h1 className="mt-3 font-display text-4xl font-semibold text-cocoa">Just the two of us</h1>
           <Suspense fallback={<div className="h-64" />}>
             <SignIn />
           </Suspense>
         </div>
-        <Link href="/" className="mt-6 text-center text-sm text-brown hover:text-burgundy">
-          ← Back to us
-        </Link>
+        <div className="mt-6 flex justify-center">
+          <BackLink href="/" icon={ChevronLeft}>
+            Back to us
+          </BackLink>
+        </div>
       </div>
     </PageTransition>
   );
@@ -40,8 +44,10 @@ async function SignIn() {
       <div className="mt-4 space-y-5">
         <p className="text-brown">You&apos;re signed in as {owner.email}.</p>
         <div className="flex flex-wrap justify-center gap-2">
-          <ButtonLink href="/memories/upload">Add photos</ButtonLink>
-          <ButtonLink href="/monthsary" variant="secondary">
+          <ButtonLink href="/memories/upload" icon={ImagePlus}>
+            Add photos
+          </ButtonLink>
+          <ButtonLink href="/monthsary" variant="secondary" icon={Sparkles}>
             Make a post
           </ButtonLink>
         </div>

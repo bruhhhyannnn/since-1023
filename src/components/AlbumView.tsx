@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Check, CircleCheck, ImagePlus, Images, Play, Sparkles, Trash2, TriangleAlert, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { groupByDay, keyPhoto } from "@/lib/albums";
@@ -13,6 +13,7 @@ import { Heart } from "./Heart";
 import { FadeImg } from "./motion/FadeImg";
 import { HeartBurst } from "./motion/HeartBurst";
 import { Toast } from "./Toast";
+import { Button, ButtonLink, EmptyState } from "./ui";
 import { Viewer } from "./Viewer";
 import { Wrapped } from "./Wrapped";
 
@@ -34,11 +35,6 @@ type Props = {
 /** Deletes wait this long so they can be undone. */
 const UNDO_MS = 5000;
 
-const playIcon = (
-  <svg viewBox="0 0 24 24" className="size-4" aria-hidden="true">
-    <path d="M7 4.5v15l12-7.5z" fill="currentColor" />
-  </svg>
-);
 
 /** One monthsary album, presented like the Photos app. */
 export function AlbumView({ n, photos, canEdit, complete, celebratingToday, initialPhoto, now, yearPhotos, autoplay }: Props) {
@@ -281,40 +277,24 @@ export function AlbumView({ n, photos, canEdit, complete, celebratingToday, init
             </p>
             <div className="enter mt-5 flex flex-wrap gap-2" style={{ "--d": "450ms" } as React.CSSProperties}>
               {shown.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setWrap(wrapMonth(n, shown))}
-                  className="press inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-medium text-cocoa hover:bg-cream"
-                >
-                  {playIcon}
+                <Button variant="light" icon={Play} onClick={() => setWrap(wrapMonth(n, shown))}>
                   Watch our Wrapped
-                </button>
+                </Button>
               )}
               {years && (
-                <button
-                  type="button"
-                  onClick={() => setWrap(wrapYear(years, yearPhotos!))}
-                  className="press inline-flex items-center gap-2 rounded-full bg-burgundy px-5 py-2.5 text-sm font-medium text-cream hover:bg-burgundy-dark"
-                >
-                  {playIcon}
+                <Button icon={Play} onClick={() => setWrap(wrapYear(years, yearPhotos!))}>
                   Our {ordinal(years)} year, Wrapped
-                </button>
+                </Button>
               )}
               {canEdit && complete && shown.length > 0 && (
-                <Link
-                  href={`/monthsary?n=${n}`}
-                  className="press rounded-full bg-burgundy px-5 py-2.5 text-sm font-medium text-cream hover:bg-burgundy-dark"
-                >
+                <ButtonLink href={`/monthsary?n=${n}`} icon={Sparkles}>
                   Make the post
-                </Link>
+                </ButtonLink>
               )}
               {canEdit && (
-                <Link
-                  href="/memories/upload"
-                  className="press rounded-full bg-white/15 px-5 py-2.5 text-sm font-medium text-white backdrop-blur hover:bg-white/25"
-                >
+                <ButtonLink href="/memories/upload" variant="glass" icon={ImagePlus}>
                   Add photos
-                </Link>
+                </ButtonLink>
               )}
             </div>
           </div>
@@ -324,37 +304,56 @@ export function AlbumView({ n, photos, canEdit, complete, celebratingToday, init
       {/* Select / Cancel, for the owners */}
       {canEdit && shown.length > 0 && (
         <div className="mt-6 flex items-center justify-between gap-3">
-          <p className="text-sm text-brown">
-            {selecting ? "Tap photos to select them." : `${shown.length} photo${shown.length === 1 ? "" : "s"}`}
+          <p className="flex items-center gap-2 text-sm text-brown">
+            {selecting ? (
+              "Tap photos to select them."
+            ) : (
+              <>
+                <Images aria-hidden="true" className="size-4 text-tan" />
+                {shown.length} photo{shown.length === 1 ? "" : "s"}
+              </>
+            )}
           </p>
-          <button
-            type="button"
+          <Button
+            size="sm"
+            variant={selecting ? "primary" : "secondary"}
+            icon={selecting ? X : CircleCheck}
             onClick={() => {
               setSelecting((s) => !s);
               setSelected(new Set());
               // Clear "added to favorites" and similar notes so they don't cover the toolbar.
               setToast((t) => (t?.undoable ? t : null));
             }}
-            className={`press rounded-full px-4 py-1.5 text-sm font-medium ${
-              selecting ? "bg-burgundy text-cream" : "border border-wheat-deep bg-paper text-cocoa hover:border-tan"
-            }`}
           >
             {selecting ? "Cancel" : "Select"}
-          </button>
+          </Button>
         </div>
       )}
 
       {error && !openId && (
-        <p role="alert" className="mt-4 rounded-2xl border border-rose/30 bg-paper px-4 py-3 text-sm text-rose">
+        <p role="alert" className="enter mt-4 flex items-start gap-2 rounded-2xl border border-rose/30 bg-paper px-4 py-3 text-sm text-rose">
+          <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
           {error}
         </p>
       )}
 
       {/* Days */}
       {days.length === 0 ? (
-        <p className="enter mt-10 text-center text-brown">
-          {canEdit ? "No photos yet. Add some as the month goes." : "No photos in this album yet."}
-        </p>
+        <div className="enter mt-8">
+          <EmptyState
+            icon={canEdit ? ImagePlus : Images}
+            title="No photos yet"
+            action={
+              canEdit && (
+                <ButtonLink href="/memories/upload" icon={ImagePlus}>
+                  Add photos
+                </ButtonLink>
+              )
+            }
+          >
+            {canEdit ? "Add some as the month goes." : "Photos from these days will show up here."}
+          </EmptyState>
+        </div>
       ) : (
         <div className={`mt-6 space-y-8 ${selecting ? "pb-28" : ""}`}>
           {days.map(({ day, photos: list }, dayIndex) => (
@@ -409,11 +408,7 @@ export function AlbumView({ n, photos, canEdit, complete, celebratingToday, init
                             isSelected ? "bg-burgundy" : "bg-black/20"
                           }`}
                         >
-                          {isSelected && (
-                            <svg viewBox="0 0 24 24" className="pop-in size-3.5 text-white">
-                              <path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          )}
+                          {isSelected && <Check className="pop-in size-3.5 text-white" strokeWidth={3.5} />}
                         </span>
                       )}
                     </li>
@@ -442,15 +437,14 @@ export function AlbumView({ n, photos, canEdit, complete, celebratingToday, init
               <Heart className="size-5" filled={allSelectedFavorite} />
               {burst > 0 && <HeartBurst key={burst} />}
             </button>
-            <button
-              type="button"
+            <Button
+              variant="danger"
+              icon={Trash2}
               disabled={selected.size === 0}
               onClick={() => setConfirm({ ids: [...selected], fromViewer: false })}
-              className="press inline-flex h-11 items-center gap-1.5 rounded-full bg-[#b3261e] px-4 text-sm font-semibold text-white hover:bg-[#8f1d17] disabled:opacity-40"
             >
-              <TrashIcon />
               Delete
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -490,25 +484,11 @@ export function AlbumView({ n, photos, canEdit, complete, celebratingToday, init
           onAction={undo}
           durationMs={toast.undoable ? UNDO_MS : undefined}
           raised={selecting}
+          icon={toast.undoable ? <Trash2 aria-hidden="true" className="size-4 shrink-0 opacity-80" /> : <Check aria-hidden="true" className="size-4 shrink-0" />}
         />
       )}
 
       {wrap && <Wrapped wrap={wrap} now={now} complete={complete} onClose={() => setWrap(null)} />}
     </>
-  );
-}
-
-export function TrashIcon({ className = "size-4" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
-      <path
-        d="M4 7h16M10 11v6M14 11v6M5.5 7l1 12a2 2 0 0 0 2 1.8h7a2 2 0 0 0 2-1.8l1-12M9 7V4.8A.8.8 0 0 1 9.8 4h4.4a.8.8 0 0 1 .8.8V7"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }

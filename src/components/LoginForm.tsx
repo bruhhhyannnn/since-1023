@@ -1,17 +1,16 @@
 "use client";
 
+import { Eye, EyeOff, LogIn, Lock, Mail } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { buttonStyles } from "./ui";
-
-const field =
-  "mt-1 w-full rounded-xl border border-wheat-deep bg-cream px-4 py-3 text-cocoa outline-none placeholder:text-tan focus:border-burgundy";
+import { Button, IconButton, TextField } from "./ui";
 
 export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [show, setShow] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -43,36 +42,41 @@ export function LoginForm() {
 
   return (
     <form onSubmit={submit} className="mt-6 space-y-4 text-left">
-      <label className="block text-sm text-brown">
-        Email
-        <input
-          type="email"
-          required
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className={field}
-        />
-      </label>
-      <label className="block text-sm text-brown">
-        Password
-        <input
-          type="password"
-          required
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className={field}
-        />
-      </label>
+      <TextField
+        label="Email"
+        icon={Mail}
+        type="email"
+        required
+        autoComplete="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <TextField
+        label="Password"
+        icon={Lock}
+        type={show ? "text" : "password"}
+        required
+        autoComplete="current-password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        trailing={
+          <IconButton
+            icon={show ? EyeOff : Eye}
+            label={show ? "Hide password" : "Show password"}
+            size="sm"
+            className="mr-1"
+            onClick={() => setShow((s) => !s)}
+          />
+        }
+      />
       {error && (
-        <p role="alert" className="text-sm text-rose">
+        <p role="alert" className="enter text-sm text-rose">
           {error}
         </p>
       )}
-      <button type="submit" disabled={busy} className={`${buttonStyles.primary} w-full py-3`}>
+      <Button type="submit" disabled={busy} icon={LogIn} size="lg" className="w-full">
         {busy ? "Signing in…" : "Sign in"}
-      </button>
+      </Button>
     </form>
   );
 }

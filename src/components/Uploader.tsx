@@ -1,14 +1,16 @@
 "use client";
 
+import { Check, CopyCheck, ImagePlus, Images, PenLine, Plus, RotateCcw, TriangleAlert, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { duplicateFlags } from "@/lib/duplicates";
 import { formatDate } from "@/lib/format";
 import { FULL_SIDE, THUMB_SIDE, readTakenAt, resizeToJpeg, type Jpeg } from "@/lib/image";
 import { LIMITS } from "@/lib/photos";
-import { albumFor, fromInputValue, monthsaryTitle, toInputValue } from "@/lib/time";
+import { albumFor, monthsaryTitle } from "@/lib/time";
 import { Heart } from "./Heart";
-import { buttonStyles } from "./ui";
+import { Button, ButtonLink, DateTimeField, IconButton, TextField } from "./ui";
 
 type Item = {
   key: string;
@@ -18,9 +20,11 @@ type Item = {
   caption: string;
   thumb?: Jpeg;
   preview?: string;
-  /** 0 → 1 while uploading. */
+  /** From 0 to 1 while uploading. */
   progress: number;
   error?: string;
+  /** Upload it even though it looks like a photo we already have. */
+  keepDuplicate?: boolean;
 };
 
 const noop = () => () => {};
@@ -33,7 +37,8 @@ const useReady = () =>
   );
 
 const isImage = (f: File) => f.type.startsWith("image/") || /\.(heic|heif|jpe?g|png|webp)$/i.test(f.name);
-const canUpload = (i: Item) => Boolean(i.thumb) && (i.status === "ready" || i.status === "error");
+const canUpload = (i: Item, duplicate: boolean) =>
+  Boolean(i.thumb) && (i.status === "ready" || i.status === "error") && (!duplicate || Boolean(i.keepDuplicate));
 
 /** How many photos upload at the same time. */
 const PARALLEL = 2;
@@ -60,7 +65,8 @@ function post(form: FormData, onProgress: (fraction: number) => void): Promise<R
   });
 }
 
-export function Uploader() {
+/** `existing`: when every photo already in our albums was taken, to catch duplicates. */
+export function Uploader({ existing = [] }: { existing?: number[] }) {
   const [items, setItems] = useState<Item[]>([]);
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -152,13 +158,22 @@ export function Uploader() {
     }
   }
 
-  const pending = items.filter(canUpload).length;
+  // Photos we already have (or picked twice) are skipped unless chosen with "Add anyway".
+  const settled = (i: Item) => i.status === "done" || i.status === "uploading";
+  const flags = duplicateFlags(
+    items.map((i) => (settled(i) ? undefined : i.takenAt)),
+    existing,
+  );
+  const isDuplicate = (i: Item) => flags[items.indexOf(i)];
+  const queue = items.filter((i) => canUpload(i, isDuplicate(i)));
+  const skipped = items.filter((i) => isDuplicate(i) && !i.keepDuplicate && !settled(i)).length;
+  const pending = queue.length;
   const reading = items.some((i) => i.status === "reading");
   const uploading = items.filter((i) => i.status === "uploading").length;
   const done = items.filter((i) => i.status === "done").length;
-  const allDone = items.length > 0 && done === items.length;
+  const allDone = done > 0 && done + skipped === items.length;
   const overall = items.length ? items.reduce((sum, i) => sum + (i.status === "done" ? 1 : i.progress), 0) / items.length : 0;
-  const showBar = pending > 0 || reading || busy || allDone;
+  const showBar = pending > 0 || reading || busy || allDone || skipped > 0;
 
   return (
     <div>
@@ -177,7 +192,13 @@ export function Uploader() {
           dragging ? "scale-[1.01] border-burgundy bg-wheat/60" : "border-tan bg-paper/70 hover:border-burgundy hover:bg-paper"
         }`}
       >
-        <Heart className={`size-7 text-burgundy transition-transform duration-300 group-hover:scale-125 ${dragging ? "beat" : ""}`} />
+        <span
+          className={`grid size-14 place-items-center rounded-full bg-wheat text-burgundy transition-transform duration-300 group-hover:scale-110 ${
+            dragging ? "beat" : ""
+          }`}
+        >
+          <ImagePlus aria-hidden="true" className="size-6" />
+        </span>
         <span className="mt-3 font-display text-2xl font-semibold text-cocoa">{ready ? "Choose photos" : "Getting ready…"}</span>
         <span className="mt-1 text-sm text-brown">or drop them here. Pick as many as you like.</span>
         <input
@@ -210,6 +231,7 @@ export function Uploader() {
               key={item.key}
               item={item}
               index={i}
+              duplicate={isDuplicate(item)}
               disabled={busy || item.status === "done" || item.status === "uploading"}
               onChange={(patch) => update(item.key, patch)}
               onRemove={() => setItems((list) => list.filter((x) => x.key !== item.key))}
@@ -233,17 +255,19 @@ export function Uploader() {
             )}
             {allDone && lastAlbum !== null ? (
               <>
-                <p className="min-w-0 whitespace-nowrap text-sm font-medium text-cocoa">
-                  <span className="pop-in mr-1.5 inline-grid size-5 place-items-center rounded-full bg-burgundy text-[11px] text-cream">✓</span>
+                <p className="flex min-w-0 items-center gap-2 whitespace-nowrap text-sm font-medium text-cocoa">
+                  <span className="pop-in grid size-6 place-items-center rounded-full bg-burgundy text-cream">
+                    <Check aria-hidden="true" className="size-3.5" strokeWidth={3} />
+                  </span>
                   {done === 1 ? "Added" : `All ${done} added`}
                 </p>
                 <div className="flex shrink-0 items-center gap-1">
-                  <button type="button" onClick={() => setItems([])} className="press rounded-full px-3 py-2 text-sm text-brown hover:text-burgundy">
+                  <Button variant="ghost" size="sm" icon={Plus} onClick={() => setItems([])}>
                     Add more
-                  </button>
-                  <Link href={`/memories/${lastAlbum}`} className={`${buttonStyles.primary} press`}>
+                  </Button>
+                  <ButtonLink href={`/memories/${lastAlbum}`} icon={Images}>
                     See the album
-                  </Link>
+                  </ButtonLink>
                 </div>
               </>
             ) : (
@@ -253,16 +277,13 @@ export function Uploader() {
                     ? "Getting photos ready…"
                     : busy
                       ? `Uploading ${done + uploading} of ${done + uploading + pending}…`
-                      : `${pending} photo${pending === 1 ? "" : "s"} ready to add`}
+                      : pending === 0 && skipped > 0
+                        ? `${skipped === 1 ? "That photo is" : "Those photos are"} already in our albums`
+                        : `${pending} photo${pending === 1 ? "" : "s"} ready${skipped ? ` · ${skipped} already added` : ""}`}
                 </p>
-                <button
-                  type="button"
-                  onClick={() => upload(items.filter(canUpload))}
-                  disabled={busy || reading || pending === 0}
-                  className={`${buttonStyles.primary} press shrink-0`}
-                >
-                  {busy ? "Uploading…" : `Add ${pending} photo${pending === 1 ? "" : "s"}`}
-                </button>
+                <Button icon={Upload} onClick={() => upload(queue)} disabled={busy || reading || pending === 0}>
+                  {busy ? "Uploading…" : pending ? `Add ${pending} photo${pending === 1 ? "" : "s"}` : "Add photos"}
+                </Button>
               </>
             )}
           </div>
@@ -275,6 +296,7 @@ export function Uploader() {
 function UploadRow({
   item,
   index,
+  duplicate,
   disabled,
   onChange,
   onRemove,
@@ -282,18 +304,18 @@ function UploadRow({
 }: {
   item: Item;
   index: number;
+  duplicate: boolean;
   disabled: boolean;
   onChange: (patch: Partial<Item>) => void;
   onRemove: () => void;
   onRetry?: () => void;
 }) {
-  const field =
-    "w-full min-w-0 rounded-lg border border-wheat-deep bg-cream px-2.5 py-1.5 text-sm text-cocoa outline-none placeholder:text-tan focus:border-burgundy disabled:opacity-70";
+  const skipped = duplicate && !item.keepDuplicate;
   return (
     <li
       className={`slide-in relative overflow-hidden rounded-2xl border bg-paper/80 p-3 transition-colors sm:p-4 ${
         item.status === "done" ? "border-burgundy/30" : item.status === "error" ? "border-rose/40" : "border-wheat-deep/70"
-      }`}
+      } ${skipped ? "opacity-70" : ""}`}
       style={{ animationDelay: `${Math.min(index, 8) * 60}ms` }}
     >
       <div className="flex gap-3 sm:gap-4">
@@ -310,7 +332,9 @@ function UploadRow({
           )}
           {item.status === "done" && (
             <div className="fade-in absolute inset-0 grid place-items-center bg-burgundy/55">
-              <span className="pop-in grid size-9 place-items-center rounded-full bg-cream text-lg font-bold text-burgundy">✓</span>
+              <span className="pop-in grid size-9 place-items-center rounded-full bg-cream text-burgundy">
+                <Check aria-hidden="true" className="size-5" strokeWidth={3} />
+              </span>
             </div>
           )}
         </div>
@@ -327,57 +351,66 @@ function UploadRow({
               </p>
             </div>
             {!disabled && (
-              <button
-                type="button"
-                onClick={onRemove}
-                aria-label={`Remove ${item.file.name}`}
-                className="press -mr-1 -mt-1 grid size-8 shrink-0 place-items-center rounded-full text-lg leading-none text-brown hover:bg-wheat hover:text-burgundy"
-              >
-                ×
-              </button>
+              <IconButton icon={X} label={`Remove ${item.file.name}`} size="sm" onClick={onRemove} className="-mr-1.5 -mt-1.5" />
             )}
           </div>
 
-          {item.takenAt !== undefined && (
-            <>
-              <label className="mt-2 block">
-                <span className="sr-only">When was this taken?</span>
-                <input
-                  type="datetime-local"
-                  value={toInputValue(item.takenAt)}
-                  disabled={disabled}
-                  onChange={(e) => {
-                    const ms = fromInputValue(e.target.value);
-                    if (ms !== null) onChange({ takenAt: ms });
-                  }}
-                  className={field}
-                />
-              </label>
-              <p className="mt-1 truncate text-xs text-brown">
+          {duplicate && item.status !== "done" && (
+            <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl bg-wheat/70 px-3 py-2 text-xs text-cocoa">
+              <CopyCheck aria-hidden="true" className="size-4 shrink-0 text-burgundy" />
+              <span className="min-w-0 flex-1">
+                {item.keepDuplicate ? "Looks like one we already have, but it'll be added." : "Looks like one we already have, so it'll be skipped."}
+              </span>
+              <button
+                type="button"
+                onClick={() => onChange({ keepDuplicate: !item.keepDuplicate })}
+                className="press shrink-0 rounded-full bg-paper px-2.5 py-1 font-medium text-burgundy shadow-sm"
+              >
+                {item.keepDuplicate ? "Skip it" : "Add anyway"}
+              </button>
+            </div>
+          )}
+
+          {item.takenAt !== undefined && !skipped && (
+            <div className="mt-2 space-y-2">
+              <DateTimeField
+                label="Taken on"
+                hideLabel
+                value={item.takenAt}
+                disabled={disabled}
+                onChange={(ms) => onChange({ takenAt: ms })}
+                hint={(ms) => (
+                  <>
+                    Goes in the <span className="font-medium text-burgundy">{monthsaryTitle(albumFor(ms))}</span> album
+                  </>
+                )}
+              />
+              <p className="truncate px-0.5 text-xs text-brown">
                 Goes in the <span className="font-medium text-burgundy">{monthsaryTitle(albumFor(item.takenAt))}</span> album
               </p>
-              <input
-                type="text"
+              <TextField
+                label="Caption"
+                hideLabel
+                icon={PenLine}
                 value={item.caption}
                 maxLength={LIMITS.maxCaption}
                 disabled={disabled}
                 onChange={(e) => onChange({ caption: e.target.value })}
                 placeholder="Caption (optional)"
-                aria-label="Caption"
-                className={`${field} mt-2`}
               />
-            </>
+            </div>
           )}
 
           {item.error && (
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <p role="alert" className="min-w-0 text-sm text-rose">
+              <p role="alert" className="flex min-w-0 flex-1 items-start gap-1.5 text-sm text-rose">
+                <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
                 {item.error}
               </p>
               {item.thumb && onRetry && (
-                <button type="button" onClick={onRetry} className="press rounded-full bg-burgundy px-3 py-1 text-xs font-medium text-cream">
+                <Button size="sm" icon={RotateCcw} onClick={onRetry}>
                   Try again
-                </button>
+                </Button>
               )}
             </div>
           )}

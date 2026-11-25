@@ -1,5 +1,6 @@
 "use client";
 
+import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -16,8 +17,9 @@ export function SignOutButton() {
         router.push("/");
         router.refresh();
       }}
-      className="underline-offset-4 hover:text-burgundy hover:underline disabled:opacity-50"
+      className="press inline-flex items-center gap-1 rounded-full underline-offset-4 hover:text-burgundy hover:underline disabled:opacity-50"
     >
+      <LogOut aria-hidden="true" className="size-3.5" />
       {busy ? "Signing out…" : "Sign out"}
     </button>
   );

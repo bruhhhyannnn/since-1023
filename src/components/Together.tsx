@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowRight, CalendarHeart, Gem, Heart as HeartIcon, Hourglass, Timer, CalendarDays } from "lucide-react";
 import Link from "next/link";
 import { formatDate, num } from "@/lib/format";
 import {
@@ -74,7 +75,8 @@ export function TodayLine() {
             href={`/memories/${today}?wrapped=1`}
             className="pop-in press inline-flex items-center gap-2 rounded-full bg-burgundy px-4 py-1.5 text-sm font-medium text-cream shadow-lg shadow-burgundy/25 hover:bg-burgundy-dark"
           >
-            <Heart className="beat size-3.5" /> Happy {monthsaryTitle(today)}! Watch our Wrapped →
+            <Heart className="beat size-3.5" /> Happy {monthsaryTitle(today)}! Watch our Wrapped
+            <ArrowRight aria-hidden="true" className="size-4" />
           </Link>
         </>
       ) : (
@@ -113,8 +115,8 @@ export function NextDates() {
     now === null
       ? null
       : [
-          { eyebrow: "Next monthsary", ...nextMonthsary(now), title: monthsaryTitle(nextMonthsary(now).n) },
-          { eyebrow: "Next anniversary", ...nextAnniversary(now), title: monthsaryTitle(nextAnniversary(now).years * 12) },
+          { eyebrow: "Next monthsary", icon: CalendarHeart, ...nextMonthsary(now), title: monthsaryTitle(nextMonthsary(now).n) },
+          { eyebrow: "Next anniversary", icon: Gem, ...nextAnniversary(now), title: monthsaryTitle(nextAnniversary(now).years * 12) },
         ];
 
   return (
@@ -123,7 +125,10 @@ export function NextDates() {
         <article key={i} className="lift min-h-44 rounded-3xl border border-wheat-deep/70 bg-paper/80 p-6">
           {c && (
             <>
-              <p className="eyebrow">{c.eyebrow}</p>
+              <p className="eyebrow flex items-center gap-1.5">
+                <c.icon aria-hidden="true" className="size-3.5" />
+                {c.eyebrow}
+              </p>
               <h3 className="mt-1 font-display text-3xl font-semibold text-cocoa">{c.title}</h3>
               <p className="mt-1 text-sm text-brown">
                 {formatDate(c.at, "long")} · {formatDate(c.at, "time")}
@@ -179,13 +184,25 @@ export function Milestones() {
   return (
     <ul className="divide-y divide-wheat-deep/70 rounded-3xl border border-wheat-deep/70 bg-paper/80">
       {upcomingMilestones(now, 4).map((m) => (
-        <li key={m.key} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-5 py-4">
+        <li key={m.key} className="flex items-center gap-4 px-5 py-4">
+          <MilestoneIcon kind={m.key.split("-")[0]} />
+          <span className="flex min-w-0 flex-1 flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <span className="font-display text-xl font-semibold text-cocoa">{m.label}</span>
           <span className="text-sm text-brown">
             {formatDate(m.at, "medium")} · <span className="text-burgundy">{relative(m.at - now)}</span>
           </span>
+          </span>
         </li>
       ))}
     </ul>
+  );
+}
+
+function MilestoneIcon({ kind }: { kind: string }) {
+  const Icon = kind === "days" ? CalendarDays : kind === "hours" ? Hourglass : kind === "seconds" ? Timer : HeartIcon;
+  return (
+    <span className="grid size-10 shrink-0 place-items-center rounded-full bg-wheat text-burgundy">
+      <Icon aria-hidden="true" className="size-[18px]" />
+    </span>
   );
 }

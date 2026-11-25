@@ -1,11 +1,11 @@
+import { CalendarHeart, ChevronRight, Hourglass, ImagePlus, Images, Sigma, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Heart } from "@/components/Heart";
 import { FadeImg } from "@/components/motion/FadeImg";
 import { FloatingHearts } from "@/components/motion/FloatingHearts";
 import { PageTransition } from "@/components/motion/PageTransition";
 import { LiveCounter, Milestones, NextDates, TodayLine, Totals } from "@/components/Together";
-import { ButtonLink, Section, StorageNotice } from "@/components/ui";
+import { ButtonLink, EmptyState, Section, StorageNotice } from "@/components/ui";
 import { albumOf } from "@/lib/albums";
 import { getOwner } from "@/lib/auth";
 import { loadPhotos } from "@/lib/data";
@@ -55,15 +55,15 @@ export default function Home() {
           <OnThisDay />
         </Suspense>
 
-        <Section title="Counting down to">
+        <Section title="Counting down to" icon={Hourglass}>
           <NextDates />
         </Section>
 
-        <Section title="Or, if you’re counting">
+        <Section title="Or, if you’re counting" icon={Sigma}>
           <Totals />
         </Section>
 
-        <Section title="Coming up">
+        <Section title="Coming up" icon={Sparkles}>
           <Milestones />
         </Section>
 
@@ -90,7 +90,7 @@ async function OnThisDay() {
   const years = [...byYear.entries()].sort((a, b) => b[0] - a[0]);
 
   return (
-    <Section title="On this day">
+    <Section title="On this day" icon={CalendarHeart}>
       <div className="space-y-6">
         {years.map(([year, list]) => {
           const ago = today.year - year;
@@ -131,10 +131,15 @@ async function LatestMemories() {
   return (
     <Section
       title="Latest memories"
+      icon={Images}
       action={
         loaded.photos.length > 0 && (
-          <Link href="/memories" className="text-sm text-brown underline-offset-4 hover:text-burgundy hover:underline">
+          <Link
+            href="/memories"
+            className="press group inline-flex items-center gap-0.5 rounded-full py-1 pl-3 pr-2 text-sm font-medium text-brown hover:bg-wheat/60 hover:text-burgundy"
+          >
             See all
+            <ChevronRight aria-hidden="true" className="size-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
         )
       }
@@ -142,16 +147,17 @@ async function LatestMemories() {
       {problem ? (
         <StorageNotice loaded={loaded} />
       ) : loaded.photos.length === 0 ? (
-        <div className="flex flex-col items-center rounded-3xl border border-dashed border-tan bg-paper/70 px-6 py-10 text-center">
-          <Heart className="beat size-6 text-burgundy" />
-          <p className="mt-3 font-display text-2xl font-semibold text-cocoa">No photos yet</p>
-          <p className="mt-1 max-w-sm text-sm text-brown">
-            Add our favorite pictures any day. They&apos;re sorted into monthsary albums automatically.
-          </p>
-          <div className="mt-5">
-            <ButtonLink href="/memories/upload">Add photos</ButtonLink>
-          </div>
-        </div>
+        <EmptyState
+          icon={ImagePlus}
+          title="No photos yet"
+          action={
+            <ButtonLink href="/memories/upload" icon={ImagePlus}>
+              Add photos
+            </ButtonLink>
+          }
+        >
+          Add our favorite pictures any day. They&apos;re sorted into monthsary albums automatically.
+        </EmptyState>
       ) : (
         <ul className="grid grid-cols-4 gap-[3px] overflow-hidden rounded-2xl">
           {loaded.photos.slice(0, 8).map((p, i) => (

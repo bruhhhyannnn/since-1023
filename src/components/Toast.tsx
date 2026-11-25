@@ -1,5 +1,7 @@
 "use client";
 
+import { RotateCcw } from "lucide-react";
+
 /** A small message at the bottom of the screen, with an optional action like "Undo". */
 export function Toast({
   message,
@@ -7,6 +9,7 @@ export function Toast({
   onAction,
   durationMs,
   raised,
+  icon,
 }: {
   message: string;
   action?: string;
@@ -15,6 +18,7 @@ export function Toast({
   durationMs?: number;
   /** Sit above a bottom toolbar instead of on top of it. */
   raised?: boolean;
+  icon?: React.ReactNode;
 }) {
   return (
     <div
@@ -23,9 +27,15 @@ export function Toast({
       }`}
     >
       <div role="status" className="toast-in pointer-events-auto relative flex items-center gap-4 overflow-hidden rounded-full bg-cocoa py-3 pl-5 pr-3 text-sm text-cream shadow-2xl">
+        {icon}
         <span>{message}</span>
         {action && (
-          <button type="button" onClick={onAction} className="press rounded-full bg-cream/15 px-3.5 py-1.5 font-semibold hover:bg-cream/25">
+          <button
+            type="button"
+            onClick={onAction}
+            className="press inline-flex items-center gap-1.5 rounded-full bg-cream/15 px-3.5 py-1.5 font-semibold hover:bg-cream/25"
+          >
+            <RotateCcw aria-hidden="true" className="size-4" />
             {action}
           </button>
         )}

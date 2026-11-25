@@ -7,7 +7,7 @@ Our little corner of the internet. Bryan & Cecilia, together since **Wednesday, 
 - **Live counter.** Years, months, days, hours, minutes and seconds since exactly 7:00 PM on Oct 23, 2019, ticking every second. It always counts in Philippine time, so it reads the same on every phone.
 - **Countdowns** to the next monthsary and the next anniversary, plus fun milestones like 2,600 days or 250 million seconds together.
 - **On this day.** Photos from the same date in earlier years show up on the home page.
-- **Memories,** presented like the Photos app. Each monthsary gets an album with a full-size cover photo and the photos grouped by day. Favorites are shown bigger, and the viewer is swipeable.
+- **Memories,** presented like the Photos app. Each monthsary gets an album with a full-size cover photo and the photos grouped by day. Favorites are shown bigger. The viewer is swipeable, you can double-tap to zoom, and anyone can save or share a photo from it.
 - **Our Wrapped.** Every album has a tap-through story of its month. Tap the right side to go on, the left to go back, and hold to pause. It covers:
   - how long the month was, in minutes
   - how many moments we saved
@@ -27,7 +27,7 @@ Each album runs from the **23rd through the 22nd**. At exactly **12:00 AM on the
 
 - **Visitors** can see the counter and every album. They never see a sign-in page or any edit buttons.
 - **Us (the owners)** sign in through a hidden door: **tap the heart in the footer five times**, or go to `/login`. Once signed in, you can:
-  - add photos (two upload at a time, with progress bars and a "Try again" button if one fails)
+  - add photos (two upload at a time, with progress bars and a "Try again" button if one fails). Photos that are already in our albums are spotted and skipped, unless you tap "Add anyway".
   - heart favorites, and edit dates and captions
   - delete photos: open one and tap **Delete**, or tap **Select** on an album to delete or favorite several at once. Deleting waits 5 seconds with an **Undo** button, just in case.
   - make the monthsary post
@@ -87,7 +87,8 @@ npm run build
 ## Make it yours
 
 - Names, the start date and the timezone are in [`src/lib/us.ts`](src/lib/us.ts).
-- Colors (wheat, light brown, burgundy) and fonts are in [`src/app/globals.css`](src/app/globals.css). The Instagram image uses the same colors, in [`src/lib/collage.ts`](src/lib/collage.ts).
+- Colors (wheat, light brown, burgundy) and fonts are in [`src/app/globals.css`](src/app/globals.css).
+- Every control is our own, in [`src/components/ui`](src/components/ui): buttons, text fields, the toggle switch, the picker sheet, and the calendar for dates and times. Icons come from [Lucide](https://lucide.dev). The Instagram image uses the same colors, in [`src/lib/collage.ts`](src/lib/collage.ts).
 
 ## How it's built
 

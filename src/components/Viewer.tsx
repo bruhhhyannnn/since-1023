@@ -1,13 +1,15 @@
 "use client";
 
+import { Check, ChevronLeft, ChevronRight, LoaderCircle, PenLine, Pencil, Share, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { albumOf } from "@/lib/albums";
+import { shareOrDownload } from "@/lib/collage";
 import { formatDate } from "@/lib/format";
 import { LIMITS, type Photo, type PhotoPatch } from "@/lib/photos";
-import { fromInputValue, toInputValue } from "@/lib/time";
-import { TrashIcon } from "./AlbumView";
+import { albumFor, monthsaryTitle } from "@/lib/time";
 import { Heart } from "./Heart";
 import { HeartBurst } from "./motion/HeartBurst";
-import { buttonStyles } from "./ui";
+import { Button, DateTimeField, IconButton, Sheet, TextField } from "./ui";
 
 type Props = {
   photos: Photo[];
@@ -24,14 +26,15 @@ type Props = {
 
 /**
  * Full-screen photo viewer, like the Photos app: swipe or use the arrows to
- * move, tap the photo to hide the controls, jump around with the filmstrip.
+ * move, tap to hide the controls, double-tap to zoom, jump around with the
+ * filmstrip.
  */
 export function Viewer({ photos, index, canEdit, error, burst = 0, onIndex, onClose, onSave, onDelete }: Props) {
   const photo = photos[index];
   const [chrome, setChrome] = useState(true);
   const [editing, setEditing] = useState(false);
-  const [dragX, setDragX] = useState(0);
-  const touch = useRef<{ x: number; y: number; horizontal: boolean | null } | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
   const strip = useRef<HTMLDivElement>(null);
 
   const hasPrev = index > 0;
@@ -69,83 +72,66 @@ export function Viewer({ photos, index, canEdit, error, burst = 0, onIndex, onCl
   if (!photo) return null;
   const taken = Date.parse(photo.takenAt);
 
-  function onTouchStart(e: React.TouchEvent) {
-    const t = e.touches[0];
-    touch.current = { x: t.clientX, y: t.clientY, horizontal: null };
-  }
-  function onTouchMove(e: React.TouchEvent) {
-    const start = touch.current;
-    if (!start) return;
-    const t = e.touches[0];
-    const dx = t.clientX - start.x;
-    const dy = t.clientY - start.y;
-    if (start.horizontal === null && Math.abs(dx) + Math.abs(dy) > 8) start.horizontal = Math.abs(dx) > Math.abs(dy);
-    if (start.horizontal) setDragX(!hasPrev && dx > 0 ? dx / 4 : !hasNext && dx < 0 ? dx / 4 : dx);
-  }
-  function onTouchEnd(e: React.TouchEvent) {
-    const start = touch.current;
-    touch.current = null;
-    if (!start) return;
-    const t = e.changedTouches[0];
-    const dx = t.clientX - start.x;
-    const dy = t.clientY - start.y;
-    setDragX(0);
-    if (start.horizontal && dx < -60) next();
-    else if (start.horizontal && dx > 60) prev();
-    else if (Math.abs(dx) < 8 && Math.abs(dy) < 8) setChrome((c) => !c);
+  async function save() {
+    setSaving(true);
+    setNote(null);
+    try {
+      const res = await fetch(photo.url);
+      if (!res.ok) throw new Error();
+      const day = formatDate(taken, "dots").replaceAll(".", "-");
+      await shareOrDownload(await res.blob(), `us-${day}.jpg`, photo.caption ?? formatDate(taken, "long"));
+    } catch {
+      setNote("Couldn't save this photo. Try again?");
+    }
+    setSaving(false);
   }
 
   const bar = `transition-opacity duration-300 ${chrome ? "opacity-100" : "pointer-events-none opacity-0"}`;
-  const arrow =
-    "absolute top-1/2 hidden size-11 -translate-y-1/2 place-items-center rounded-full bg-white/10 text-2xl text-white backdrop-blur hover:bg-white/20 md:grid";
+  const arrow = "absolute top-1/2 hidden -translate-y-1/2 md:block";
 
   return (
     <div role="dialog" aria-modal="true" aria-label="Photo viewer" className="viewer-in fixed inset-0 z-50 select-none bg-[#0f0b09] text-white">
-      {/* Photo */}
-      <div
-        className="absolute inset-0 flex touch-pan-y items-center justify-center"
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        onClick={(e) => {
-          // Mouse clicks toggle the controls; taps are handled in onTouchEnd.
-          if (e.detail > 0 && !("ontouchstart" in window)) setChrome((c) => !c);
-        }}
-      >
-        <img
-          key={photo.id}
-          src={photo.url}
-          alt={photo.caption ?? `Photo from ${formatDate(taken, "long")}`}
-          draggable={false}
-          style={{ transform: `translateX(${dragX}px)`, transition: dragX ? "none" : "transform 250ms ease-out" }}
-          className="fade-in max-h-full max-w-full object-contain"
-        />
-      </div>
+      <ZoomableImage
+        key={photo.id}
+        photo={photo}
+        hasPrev={hasPrev}
+        hasNext={hasNext}
+        onSwipe={(dir) => (dir > 0 ? next() : prev())}
+        onTap={() => setChrome((c) => !c)}
+      />
 
       {hasPrev && (
-        <button type="button" onClick={prev} aria-label="Previous photo" className={`${arrow} left-4 ${bar}`}>
-          ‹
-        </button>
+        <div className={`${arrow} left-4 ${bar}`}>
+          <IconButton icon={ChevronLeft} label="Previous photo" variant="glass" onClick={prev} />
+        </div>
       )}
       {hasNext && (
-        <button type="button" onClick={next} aria-label="Next photo" className={`${arrow} right-4 ${bar}`}>
-          ›
-        </button>
+        <div className={`${arrow} right-4 ${bar}`}>
+          <IconButton icon={ChevronRight} label="Next photo" variant="glass" onClick={next} />
+        </div>
       )}
 
       {/* Top bar */}
       <div className={`absolute inset-x-0 top-0 bg-gradient-to-b from-black/70 to-transparent pb-10 ${bar}`}>
         <div className="mx-auto grid max-w-5xl grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 pt-3">
-          <button type="button" onClick={onClose} className="justify-self-start rounded-full px-3 py-2 text-sm hover:bg-white/10">
-            ‹ Back
-          </button>
+          <Button variant="glass" size="sm" icon={ChevronLeft} onClick={onClose} className="justify-self-start pl-2.5">
+            Back
+          </Button>
           <div className="text-center leading-tight">
             <p className="text-sm font-semibold">{formatDate(taken, "range")}</p>
-            <p className="text-xs text-white/70">{formatDate(taken, "time")}</p>
+            <p className="text-xs text-white/70">
+              {formatDate(taken, "time")} · {index + 1} of {photos.length}
+            </p>
           </div>
-          <span className="justify-self-end text-xs text-white/60">
-            {index + 1} of {photos.length}
-          </span>
+          <IconButton
+            icon={saving ? LoaderCircle : Share}
+            label="Save or share this photo"
+            variant="glass"
+            size="sm"
+            onClick={save}
+            disabled={saving}
+            className={`justify-self-end ${saving ? "[&_svg]:animate-spin" : ""}`}
+          />
         </div>
       </div>
 
@@ -176,101 +162,218 @@ export function Viewer({ photos, index, canEdit, error, burst = 0, onIndex, onCl
             <div className="mt-3 flex items-center justify-center gap-2">
               <button
                 type="button"
-                onClick={() => onSave(photo, { favorite: !photo.favorite })}
-                aria-pressed={photo.favorite}
                 aria-label={photo.favorite ? "Remove from favorites" : "Add to favorites"}
-                className="press relative grid size-11 place-items-center rounded-full hover:bg-white/10"
+                aria-pressed={photo.favorite}
+                onClick={() => onSave(photo, { favorite: !photo.favorite })}
+                className="press relative grid size-11 place-items-center rounded-full bg-white/15 backdrop-blur transition-colors hover:bg-white/25"
               >
-                <Heart key={`${photo.id}-${photo.favorite}`} className={`size-6 ${photo.favorite ? "pop-in text-[#e8768a]" : ""}`} filled={photo.favorite} />
+                <Heart
+                  key={`${photo.id}-${photo.favorite}`}
+                  className={`size-6 ${photo.favorite ? "pop-in text-[#e8768a]" : ""}`}
+                  filled={photo.favorite}
+                />
                 {burst > 0 && photo.favorite && <HeartBurst key={burst} />}
               </button>
-              <button type="button" onClick={() => setEditing(true)} className="press rounded-full px-4 py-2 text-sm hover:bg-white/10">
+              <Button variant="glass" icon={Pencil} onClick={() => setEditing(true)}>
                 Edit
-              </button>
-              <button
-                type="button"
-                onClick={() => onDelete(photo)}
-                className="press inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm text-white/85 hover:bg-white/10 hover:text-[#f3a7b4]"
-              >
-                <TrashIcon />
+              </Button>
+              <Button variant="glass" icon={Trash2} onClick={() => onDelete(photo)} className="hover:text-[#f3a7b4]">
                 Delete
-              </button>
+              </Button>
             </div>
           )}
-          {error && (
+          {(error || note) && (
             <p role="alert" className="mt-2 text-center text-sm text-[#f3a7b4]">
-              {error}
+              {error ?? note}
             </p>
           )}
         </div>
       </div>
 
-      {editing && <EditSheet key={photo.id} photo={photo} onCancel={() => setEditing(false)} onSave={onSave} onDone={() => setEditing(false)} />}
+      {editing && <EditSheet key={photo.id} photo={photo} onClose={() => setEditing(false)} onSave={onSave} />}
+    </div>
+  );
+}
+
+/** The photo itself: swipe to move on, tap to show or hide the controls, double-tap to zoom in and drag around. */
+function ZoomableImage({
+  photo,
+  hasPrev,
+  hasNext,
+  onSwipe,
+  onTap,
+}: {
+  photo: Photo;
+  hasPrev: boolean;
+  hasNext: boolean;
+  onSwipe: (direction: 1 | -1) => void;
+  onTap: () => void;
+}) {
+  const [zoom, setZoom] = useState({ s: 1, x: 0, y: 0 });
+  const [dragX, setDragX] = useState(0);
+  const [moving, setMoving] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const touch = useRef<{ x: number; y: number; horizontal: boolean | null; from: typeof zoom } | null>(null);
+  const lastTap = useRef<{ t: number; x: number; y: number } | null>(null);
+  const tapTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => () => clearTimeout(tapTimer.current), []);
+
+  const clamp = (v: number, s: number, size: number) => {
+    const max = (size * (s - 1)) / 2;
+    return Math.max(-max, Math.min(max, v));
+  };
+
+  function toggleZoom(clientX: number, clientY: number) {
+    if (zoom.s > 1) return setZoom({ s: 1, x: 0, y: 0 });
+    const r = box.current!.getBoundingClientRect();
+    const s = 2.5;
+    const cx = clientX - (r.left + r.width / 2);
+    const cy = clientY - (r.top + r.height / 2);
+    setZoom({ s, x: clamp(-cx * (s - 1), s, r.width), y: clamp(-cy * (s - 1), s, r.height) });
+  }
+
+  function tapAt(x: number, y: number) {
+    const now = performance.now();
+    const last = lastTap.current;
+    if (last && now - last.t < 300 && Math.hypot(x - last.x, y - last.y) < 40) {
+      clearTimeout(tapTimer.current);
+      lastTap.current = null;
+      toggleZoom(x, y);
+    } else {
+      lastTap.current = { t: now, x, y };
+      tapTimer.current = setTimeout(onTap, 300);
+    }
+  }
+
+  function onTouchStart(e: React.TouchEvent) {
+    if (e.touches.length > 1) return;
+    const t = e.touches[0];
+    touch.current = { x: t.clientX, y: t.clientY, horizontal: null, from: zoom };
+    setMoving(true);
+  }
+  function onTouchMove(e: React.TouchEvent) {
+    const start = touch.current;
+    if (!start || e.touches.length > 1) return;
+    const t = e.touches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (start.from.s > 1) {
+      const r = box.current!.getBoundingClientRect();
+      setZoom({ ...start.from, x: clamp(start.from.x + dx, start.from.s, r.width), y: clamp(start.from.y + dy, start.from.s, r.height) });
+      return;
+    }
+    if (start.horizontal === null && Math.abs(dx) + Math.abs(dy) > 8) start.horizontal = Math.abs(dx) > Math.abs(dy);
+    if (start.horizontal) setDragX(!hasPrev && dx > 0 ? dx / 4 : !hasNext && dx < 0 ? dx / 4 : dx);
+  }
+  function onTouchEnd(e: React.TouchEvent) {
+    const start = touch.current;
+    touch.current = null;
+    setMoving(false);
+    setDragX(0);
+    if (!start) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return tapAt(t.clientX, t.clientY);
+    if (start.from.s === 1 && start.horizontal && Math.abs(dx) > 60) onSwipe(dx < 0 ? 1 : -1);
+  }
+
+  return (
+    <div
+      ref={box}
+      className="absolute inset-0 flex touch-none items-center justify-center overflow-hidden"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onClick={(e) => {
+        // Mouse: one click toggles the controls, a double-click zooms. Touch is handled above.
+        if ("ontouchstart" in window) return;
+        if (e.detail === 1) tapTimer.current = setTimeout(onTap, 250);
+        if (e.detail === 2) {
+          clearTimeout(tapTimer.current);
+          toggleZoom(e.clientX, e.clientY);
+        }
+      }}
+    >
+      <img
+        src={photo.url}
+        alt={photo.caption ?? `Photo from ${formatDate(Date.parse(photo.takenAt), "long")}`}
+        draggable={false}
+        style={{
+          transform: `translate(${zoom.x + dragX}px, ${zoom.y}px) scale(${zoom.s})`,
+          transition: moving ? "none" : "transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1)",
+          cursor: zoom.s > 1 ? "zoom-out" : "zoom-in",
+        }}
+        className="fade-in max-h-full max-w-full object-contain"
+      />
     </div>
   );
 }
 
 function EditSheet({
   photo,
-  onCancel,
+  onClose,
   onSave,
-  onDone,
 }: {
   photo: Photo;
-  onCancel: () => void;
+  onClose: () => void;
   onSave: (photo: Photo, patch: PhotoPatch) => Promise<boolean>;
-  onDone: () => void;
 }) {
-  const [when, setWhen] = useState(() => toInputValue(Date.parse(photo.takenAt)));
+  const [when, setWhen] = useState(() => Date.parse(photo.takenAt));
   const [caption, setCaption] = useState(photo.caption ?? "");
   const [saving, setSaving] = useState(false);
+  const moves = albumFor(when) !== albumOf(photo);
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    const ms = fromInputValue(when);
-    if (ms === null) return;
+  async function submit() {
     setSaving(true);
-    const ok = await onSave(photo, { takenAt: new Date(ms).toISOString(), caption: caption.trim() || null });
+    const ok = await onSave(photo, { takenAt: new Date(when).toISOString(), caption: caption.trim() || null });
     setSaving(false);
-    if (ok) onDone();
+    if (ok) onClose();
   }
 
-  const input =
-    "mt-1 w-full rounded-xl border border-wheat-deep bg-cream px-3 py-2.5 text-cocoa outline-none placeholder:text-tan focus:border-burgundy";
-
   return (
-    <div className="absolute inset-0 z-10 flex items-end justify-center bg-black/50 sm:items-center" onClick={onCancel}>
-      <form
-        onSubmit={submit}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.key === "Escape" && onCancel()}
-        className="sheet-up w-full max-w-md rounded-t-3xl bg-paper p-6 text-cocoa sm:rounded-3xl"
-      >
-        <h2 className="font-display text-2xl font-semibold">Edit photo</h2>
-        <label className="mt-4 block text-sm text-brown">
-          Taken on
-          <input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} className={input} />
-        </label>
-        <label className="mt-3 block text-sm text-brown">
-          Caption
-          <input
-            type="text"
-            value={caption}
-            maxLength={LIMITS.maxCaption}
-            onChange={(e) => setCaption(e.target.value)}
-            placeholder="Optional"
-            className={input}
-          />
-        </label>
-        <div className="mt-5 flex justify-end gap-2">
-          <button type="button" onClick={onCancel} className={buttonStyles.ghost}>
+    <Sheet
+      open
+      onClose={onClose}
+      title="Edit photo"
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" onClick={onClose}>
             Cancel
-          </button>
-          <button type="submit" disabled={saving} className={buttonStyles.primary}>
+          </Button>
+          <Button icon={Check} onClick={submit} disabled={saving}>
             {saving ? "Saving…" : "Save"}
-          </button>
+          </Button>
         </div>
-      </form>
-    </div>
+      }
+    >
+      <div className="space-y-4 pt-1">
+        <DateTimeField
+          label="Taken on"
+          value={when}
+          onChange={setWhen}
+          hint={(ms) => (
+            <>
+              Goes in the <span className="font-medium text-burgundy">{monthsaryTitle(albumFor(ms))}</span> album
+            </>
+          )}
+        />
+        {moves && (
+          <p className="enter -mt-2 text-xs text-burgundy">
+            This moves it to the {monthsaryTitle(albumFor(when))} album.
+          </p>
+        )}
+        <TextField
+          label="Caption"
+          icon={PenLine}
+          value={caption}
+          maxLength={LIMITS.maxCaption}
+          onChange={(e) => setCaption(e.target.value)}
+          placeholder="Optional"
+          data-autofocus
+        />
+      </div>
+    </Sheet>
   );
 }

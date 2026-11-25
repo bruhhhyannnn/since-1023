@@ -1,5 +1,6 @@
 "use client";
 
+import { Pause, Quote, RotateCcw, Share, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { albumOf } from "@/lib/albums";
 import { canvasToJpeg, loadImage, loadPostFonts, shareOrDownload } from "@/lib/collage";
@@ -175,14 +176,15 @@ export function Wrapped({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="-mr-2 grid size-10 place-items-center rounded-full text-2xl leading-none opacity-80 hover:opacity-100"
+            className="press -mr-2 grid size-10 place-items-center rounded-full opacity-80 transition-opacity hover:opacity-100"
           >
-            ×
+            <X aria-hidden="true" className="size-6" />
           </button>
         </div>
 
         {paused && Number.isFinite(slide.ms) && (
-          <p className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/40 px-4 py-1.5 text-xs text-white backdrop-blur">
+          <p className="fade-in absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-black/40 px-4 py-1.5 text-xs text-white backdrop-blur">
+            <Pause aria-hidden="true" className="size-3.5" />
             Paused
           </p>
         )}
@@ -416,9 +418,7 @@ function buildSlides(wrap: Wrap, now: number, complete: boolean): Slide[] {
         <p className="rise text-[3.6cqw] font-semibold uppercase tracking-[0.25em] opacity-80" style={delay(100)}>
           In our own words
         </p>
-        <p className="zoom-in mt-[4cqw] font-display text-[30cqw] leading-[0.5] text-[var(--accent)]" style={delay(300)}>
-          &ldquo;
-        </p>
+        <Quote aria-hidden="true" className="zoom-in mt-[5cqw] size-[16cqw] fill-current text-[var(--accent)]" strokeWidth={0} style={delay(300)} />
         <p className="rise mt-[2cqw] font-display text-[9cqw] font-medium italic leading-[1.1]" style={delay(700)}>
           {quote.text}
         </p>
@@ -620,15 +620,26 @@ function Summary({ wrap, restart, close }: { wrap: Wrap; restart: () => void; cl
           type="button"
           onClick={save}
           disabled={saving}
-          className="w-full rounded-full bg-[var(--fg)] py-[3.6cqw] text-[4.2cqw] font-semibold text-[#3d2b22] disabled:opacity-60"
+          className="press inline-flex w-full items-center justify-center gap-[2cqw] rounded-full bg-[var(--fg)] py-[3.6cqw] text-[4.2cqw] font-semibold text-[#3d2b22] disabled:opacity-60"
         >
+          <Share aria-hidden="true" className="size-[4.6cqw]" />
           {saving ? "Saving…" : "Save for our story"}
         </button>
         <div className="flex gap-[2.5cqw]">
-          <button type="button" onClick={restart} className="flex-1 rounded-full border border-[var(--soft)] py-[3cqw] text-[3.8cqw] font-medium hover:bg-white/10">
+          <button
+            type="button"
+            onClick={restart}
+            className="press inline-flex flex-1 items-center justify-center gap-[1.5cqw] rounded-full border border-[var(--soft)] py-[3cqw] text-[3.8cqw] font-medium hover:bg-white/10"
+          >
+            <RotateCcw aria-hidden="true" className="size-[4cqw]" />
             Watch again
           </button>
-          <button type="button" onClick={close} className="flex-1 rounded-full border border-[var(--soft)] py-[3cqw] text-[3.8cqw] font-medium hover:bg-white/10">
+          <button
+            type="button"
+            onClick={close}
+            className="press inline-flex flex-1 items-center justify-center gap-[1.5cqw] rounded-full border border-[var(--soft)] py-[3cqw] text-[3.8cqw] font-medium hover:bg-white/10"
+          >
+            <X aria-hidden="true" className="size-[4cqw]" />
             Close
           </button>
         </div>

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { AlbumView } from "@/components/AlbumView";
-import { StorageNotice } from "@/components/ui";
+import { BackLink, StorageNotice } from "@/components/ui";
 import { PageTransition } from "@/components/motion/PageTransition";
 import { albumOf } from "@/lib/albums";
 import { getOwner } from "@/lib/auth";
@@ -21,9 +22,11 @@ export default function AlbumPage({ params, searchParams }: PageProps<"/memories
   return (
     <PageTransition>
       <div className="mx-auto max-w-5xl px-4 pt-4 sm:pt-8">
-        <Link href="/memories" className="mb-4 inline-block text-sm text-brown hover:text-burgundy">
-          ← All memories
-        </Link>
+        <div className="mb-4">
+          <BackLink href="/memories" icon={ChevronLeft}>
+            All memories
+          </BackLink>
+        </div>
         <Suspense fallback={<AlbumSkeleton />}>
           <Album params={params} searchParams={searchParams} />
         </Suspense>
@@ -84,10 +87,13 @@ async function Album({
         {n > 0 ? (
           <Link
             href={`/memories/${n - 1}`}
-            className="rounded-2xl border border-wheat-deep/70 bg-paper/80 p-4 text-brown transition-colors hover:border-tan hover:text-burgundy"
+            className="lift group flex items-center gap-3 rounded-2xl border border-wheat-deep/70 bg-paper/80 p-4 text-brown transition-colors hover:border-tan hover:text-burgundy"
           >
-            <span className="block text-xs uppercase tracking-wider">← Before</span>
-            <span className="font-display text-xl font-semibold text-cocoa">{monthsaryTitle(n - 1)}</span>
+            <ChevronLeft aria-hidden="true" className="size-5 shrink-0 transition-transform group-hover:-translate-x-0.5" />
+            <span className="min-w-0">
+              <span className="block text-xs uppercase tracking-wider">Before</span>
+              <span className="block truncate font-display text-xl font-semibold text-cocoa">{monthsaryTitle(n - 1)}</span>
+            </span>
           </Link>
         ) : (
           <span />
@@ -95,10 +101,13 @@ async function Album({
         {n < current && (
           <Link
             href={`/memories/${n + 1}`}
-            className="rounded-2xl border border-wheat-deep/70 bg-paper/80 p-4 text-right text-brown transition-colors hover:border-tan hover:text-burgundy"
+            className="lift group flex items-center justify-end gap-3 rounded-2xl border border-wheat-deep/70 bg-paper/80 p-4 text-right text-brown transition-colors hover:border-tan hover:text-burgundy"
           >
-            <span className="block text-xs uppercase tracking-wider">After →</span>
-            <span className="font-display text-xl font-semibold text-cocoa">{monthsaryTitle(n + 1)}</span>
+            <span className="min-w-0">
+              <span className="block text-xs uppercase tracking-wider">After</span>
+              <span className="block truncate font-display text-xl font-semibold text-cocoa">{monthsaryTitle(n + 1)}</span>
+            </span>
+            <ChevronRight aria-hidden="true" className="size-5 shrink-0 transition-transform group-hover:translate-x-0.5" />
           </Link>
         )}
       </nav>

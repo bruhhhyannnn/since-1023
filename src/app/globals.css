@@ -31,6 +31,38 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Our own focus ring, scrollbars, cursor color and autofill, instead of the browser's. */
+:root {
+  accent-color: var(--color-burgundy);
+  caret-color: var(--color-burgundy);
+  scrollbar-color: color-mix(in srgb, var(--color-tan) 70%, transparent) transparent;
+  scrollbar-width: thin;
+}
+:focus {
+  outline: none;
+}
+:focus-visible {
+  outline: 2px solid var(--color-burgundy);
+  outline-offset: 2px;
+}
+input:focus-visible,
+textarea:focus-visible,
+[role="listbox"]:focus-visible,
+[role="dialog"]:focus-visible,
+[role="alertdialog"]:focus-visible {
+  outline: none;
+}
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--color-cocoa);
+  box-shadow: 0 0 0 1000px var(--color-cream) inset;
+  transition: background-color 9999s ease-out;
+}
+input::-ms-reveal {
+  display: none;
+}
+
 ::selection {
   background: color-mix(in srgb, var(--color-burgundy) 20%, transparent);
 }
