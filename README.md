@@ -7,6 +7,11 @@ Our little corner of the internet. Bryan & Cecilia, together since **Wednesday, 
 - **Live counter.** Years, months, days, hours, minutes and seconds since exactly 7:00 PM on Oct 23, 2019, ticking every second. It always counts in Philippine time, so it reads the same on every phone.
 - **Countdowns** to the next monthsary and the next anniversary, plus fun milestones like 2,600 days or 250 million seconds together.
 - **On this day.** Photos from the same date in earlier years show up on the home page.
+- **Love notes** (`/notes`). Leave each other little notes, written in a handwriting font on paper you pick the color of.
+  - Each note is from Bryan or Cecilia. Each phone remembers who usually writes from it.
+  - **Just us** notes are only visible when signed in. **Everyone** notes show on the public site. Every new note starts as Just us.
+  - Heart the other one's notes, filter by who wrote them, and delete with Undo.
+  - The newest note shows on the home page.
 - **Memories,** presented like the Photos app. Each monthsary gets an album with a full-size cover photo and the photos grouped by day. Favorites are shown bigger. The viewer is swipeable, you can double-tap to zoom, and anyone can save or share a photo from it.
 - **Our Wrapped.** Every album has a tap-through story of its month. Tap the right side to go on, the left to go back, and hold to pause. It covers:
   - how long the month was, in minutes
@@ -41,7 +46,7 @@ Sign-in uses Supabase Auth. Only accounts whose email is in `OWNER_EMAILS` can c
 ### 1. Supabase (accounts and photos)
 
 1. Create a project at [supabase.com](https://supabase.com) (the free plan is plenty).
-2. **SQL Editor → New query:** paste everything in [`supabase/schema.sql`](supabase/schema.sql) and click **Run**.
+2. **SQL Editor → New query:** paste everything in [`supabase/schema.sql`](supabase/schema.sql) and click **Run**. It's safe to run again. If you set Supabase up before love notes existed, just run [`supabase/love-notes.sql`](supabase/love-notes.sql) the same way.
 3. **Authentication → Sign In / Providers:** turn off **Allow new users to sign up**, so nobody else can make an account.
 4. **Authentication → Users → Add user → Create new user:** enter your email and a password and tick **Auto Confirm User**. Do the same for Cecilia if she should be able to edit too.
 5. Copy these values for the next step:

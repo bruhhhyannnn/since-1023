@@ -18,6 +18,7 @@
 
   --font-display: "Cormorant Garamond Variable", "Cormorant Garamond", Georgia, serif;
   --font-sans: "DM Sans Variable", "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-hand: "Caveat Variable", "Caveat", "Segoe Print", cursive;
 }
 
 :root {
@@ -314,6 +315,12 @@ html.js .fade-img:not([data-loaded]) {
   @keyframes slide-in {
     from { opacity: 0; transform: translateX(-16px); }
   }
+  .note-in {
+    animation: note-in 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+  }
+  @keyframes note-in {
+    from { opacity: 0; transform: translateY(-28px) rotate(-5deg) scale(1.04); }
+  }
   .kenburns-slow {
     animation: kenburns-slow 22s ease-in-out infinite alternate;
   }
@@ -388,5 +395,17 @@ html.js .fade-img:not([data-loaded]) {
   ::view-transition-new(*) {
     animation-duration: 0s !important;
     animation-delay: 0s !important;
+  }
+}
+
+/* Love notes sit a little crooked, like paper on a wall, and straighten when you look. */
+.note-paper {
+  rotate: var(--tilt, 0deg);
+  transition: rotate 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), translate 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@media (hover: hover) {
+  .note-paper:hover {
+    rotate: 0deg;
+    translate: 0 -3px;
   }
 }

@@ -1,14 +1,15 @@
-import { CalendarHeart, ChevronRight, Hourglass, ImagePlus, Images, Sigma, Sparkles } from "lucide-react";
+import { CalendarHeart, ChevronRight, Hourglass, ImagePlus, Images, Mail, Sigma, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { FadeImg } from "@/components/motion/FadeImg";
 import { FloatingHearts } from "@/components/motion/FloatingHearts";
 import { PageTransition } from "@/components/motion/PageTransition";
+import { NotePaper } from "@/components/NotePaper";
 import { LiveCounter, Milestones, NextDates, TodayLine, Totals } from "@/components/Together";
 import { ButtonLink, EmptyState, Section, StorageNotice } from "@/components/ui";
 import { albumOf } from "@/lib/albums";
 import { getOwner } from "@/lib/auth";
-import { loadPhotos } from "@/lib/data";
+import { loadNotes, loadPhotos } from "@/lib/data";
 import { formatDate } from "@/lib/format";
 import type { Photo } from "@/lib/photos";
 import { START, toWall } from "@/lib/time";
@@ -55,6 +56,10 @@ export default function Home() {
           <OnThisDay />
         </Suspense>
 
+        <Suspense fallback={null}>
+          <LatestNote />
+        </Suspense>
+
         <Section title="Counting down to" icon={Hourglass}>
           <NextDates />
         </Section>
@@ -72,6 +77,32 @@ export default function Home() {
         </Suspense>
       </div>
     </PageTransition>
+  );
+}
+
+/** The newest love note (only public ones for visitors). */
+async function LatestNote() {
+  const loaded = await loadNotes();
+  const note = loaded.notes[0];
+  if (!note) return null;
+  return (
+    <Section
+      title="Latest love note"
+      icon={Mail}
+      action={
+        <Link
+          href="/notes"
+          className="press group inline-flex items-center gap-0.5 rounded-full py-1 pl-3 pr-2 text-sm font-medium text-brown hover:bg-wheat/60 hover:text-burgundy"
+        >
+          All notes
+          <ChevronRight aria-hidden="true" className="size-4 transition-transform group-hover:translate-x-0.5" />
+        </Link>
+      }
+    >
+      <Link href="/notes" className="mx-auto block max-w-md pt-2">
+        <NotePaper note={note} index={1} />
+      </Link>
+    </Section>
   );
 }
 

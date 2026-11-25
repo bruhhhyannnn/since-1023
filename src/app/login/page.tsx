@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ChevronLeft, ImagePlus, Sparkles } from "lucide-react";
+import { ChevronLeft, ImagePlus, Mail, Sparkles } from "lucide-react";
 import { Suspense } from "react";
 import { Heart } from "@/components/Heart";
 import { LoginForm } from "@/components/LoginForm";
@@ -46,6 +46,9 @@ async function SignIn() {
         <div className="flex flex-wrap justify-center gap-2">
           <ButtonLink href="/memories/upload" icon={ImagePlus}>
             Add photos
+          </ButtonLink>
+          <ButtonLink href="/notes" variant="secondary" icon={Mail}>
+            Write a note
           </ButtonLink>
           <ButtonLink href="/monthsary" variant="secondary" icon={Sparkles}>
             Make a post

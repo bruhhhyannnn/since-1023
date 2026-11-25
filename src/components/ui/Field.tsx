@@ -51,3 +51,44 @@ export function TextField({
     </div>
   );
 }
+
+/** A multi-line field that grows as you type. */
+export function TextArea({
+  label,
+  hideLabel,
+  className = "",
+  fieldClassName = "",
+  id,
+  onChange,
+  ...props
+}: {
+  label: string;
+  hideLabel?: boolean;
+  /** Classes for the text itself (font, size, colors). */
+  fieldClassName?: string;
+} & ComponentProps<"textarea">) {
+  const autoId = useId();
+  const inputId = id ?? autoId;
+  const grow = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  };
+  return (
+    <div className={`block text-left ${className}`}>
+      <label htmlFor={inputId} className={hideLabel ? "sr-only" : "mb-1.5 block text-sm font-medium text-brown"}>
+        {label}
+      </label>
+      <textarea
+        id={inputId}
+        ref={grow}
+        onChange={(e) => {
+          grow(e.currentTarget);
+          onChange?.(e);
+        }}
+        className={`block w-full min-w-0 resize-none overflow-hidden bg-transparent outline-none placeholder:opacity-60 ${fieldClassName}`}
+        {...props}
+      />
+    </div>
+  );
+}

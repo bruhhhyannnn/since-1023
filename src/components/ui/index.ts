@@ -1,10 +1,11 @@
 export { BackLink, Button, ButtonLink, IconButton, buttonClass } from "./button";
 export { DateTimeField } from "./DateTimeField";
 export { EmptyState } from "./EmptyState";
-export { TextField, fieldShell } from "./Field";
+export { TextArea, TextField, fieldShell } from "./Field";
 export { Picker, type PickerOption } from "./Picker";
 export { Section } from "./Section";
 export { Segmented } from "./Segmented";
 export { Sheet } from "./Sheet";
 export { StorageNotice } from "./StorageNotice";
+export { Swatches } from "./Swatches";
 export { Switch } from "./Switch";
