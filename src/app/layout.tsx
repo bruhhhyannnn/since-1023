@@ -13,6 +13,7 @@ export const metadata: Metadata = {
     template: `%s · ${COUPLE}`,
   },
   description: `Every year, month, day, hour, minute and second of ${US.me} and ${US.her}, since October 23, 2019.`,
+  appleWebApp: { capable: true, title: "since 10·23", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
@@ -21,7 +22,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className="h-full antialiased">
+    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
+      <head>
+        {/* Lets photos fade in without ever hiding them when JavaScript is off. */}
+        <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
+      </head>
       <body className="paper flex min-h-full flex-col">
         <SiteHeader />
         <main className="flex-1">{children}</main>

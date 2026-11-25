@@ -6,6 +6,7 @@ Our little corner of the internet. Bryan & Cecilia, together since **Wednesday, 
 
 - **Live counter.** Years, months, days, hours, minutes and seconds since exactly 7:00 PM on Oct 23, 2019, ticking every second. It always counts in Philippine time, so it reads the same on every phone.
 - **Countdowns** to the next monthsary and the next anniversary, plus fun milestones like 2,600 days or 250 million seconds together.
+- **On this day.** Photos from the same date in earlier years show up on the home page.
 - **Memories,** presented like the Photos app. Each monthsary gets an album with a full-size cover photo and the photos grouped by day. Favorites are shown bigger, and the viewer is swipeable.
 - **Our Wrapped.** Every album has a tap-through story of its month. Tap the right side to go on, the left to go back, and hold to pause. It covers:
   - how long the month was, in minutes
@@ -25,7 +26,13 @@ Each album runs from the **23rd through the 22nd**. At exactly **12:00 AM on the
 ### Who can do what
 
 - **Visitors** can see the counter and every album. They never see a sign-in page or any edit buttons.
-- **Us (the owners)** sign in through a hidden door: **tap the heart in the footer five times**, or go to `/login`. Once signed in, you can add photos, heart favorites, edit dates and captions, delete photos and make posts. "Signed in as … · Sign out" appears at the bottom of every page.
+- **Us (the owners)** sign in through a hidden door: **tap the heart in the footer five times**, or go to `/login`. Once signed in, you can:
+  - add photos (two upload at a time, with progress bars and a "Try again" button if one fails)
+  - heart favorites, and edit dates and captions
+  - delete photos: open one and tap **Delete**, or tap **Select** on an album to delete or favorite several at once. Deleting waits 5 seconds with an **Undo** button, just in case.
+  - make the monthsary post
+
+  "Signed in as … · Sign out" appears at the bottom of every page.
 
 Sign-in uses Supabase Auth. Only accounts whose email is in `OWNER_EMAILS` can change anything, and every change is checked on the server.
 
@@ -56,6 +63,10 @@ Sign-in uses Supabase Auth. Only accounts whose email is in `OWNER_EMAILS` can c
 3. Click **Deploy**. Your site will be at something like `since-1023.vercel.app`. If you change these settings later, redeploy so they take effect.
 
 A daily job (`vercel.json`) checks in on Supabase, because free Supabase projects pause after a week without any activity.
+
+## On your phone
+
+Open the site in Safari, tap **Share → Add to Home Screen**, and it opens like an app with our heart icon. Sharing the link shows a preview card with our names.
 
 ## Run it on your computer
 

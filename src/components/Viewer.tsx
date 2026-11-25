@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { formatDate } from "@/lib/format";
 import { LIMITS, type Photo, type PhotoPatch } from "@/lib/photos";
 import { fromInputValue, toInputValue } from "@/lib/time";
+import { TrashIcon } from "./AlbumView";
 import { Heart } from "./Heart";
+import { HeartBurst } from "./motion/HeartBurst";
 import { buttonStyles } from "./ui";
 
 type Props = {
@@ -12,6 +14,8 @@ type Props = {
   index: number;
   canEdit: boolean;
   error: string | null;
+  /** Bumped each time a photo is hearted, to play the little burst. */
+  burst?: number;
   onIndex: (i: number) => void;
   onClose: () => void;
   onSave: (photo: Photo, patch: PhotoPatch) => Promise<boolean>;
@@ -22,7 +26,7 @@ type Props = {
  * Full-screen photo viewer, like the Photos app: swipe or use the arrows to
  * move, tap the photo to hide the controls, jump around with the filmstrip.
  */
-export function Viewer({ photos, index, canEdit, error, onIndex, onClose, onSave, onDelete }: Props) {
+export function Viewer({ photos, index, canEdit, error, burst = 0, onIndex, onClose, onSave, onDelete }: Props) {
   const photo = photos[index];
   const [chrome, setChrome] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -96,7 +100,7 @@ export function Viewer({ photos, index, canEdit, error, onIndex, onClose, onSave
     "absolute top-1/2 hidden size-11 -translate-y-1/2 place-items-center rounded-full bg-white/10 text-2xl text-white backdrop-blur hover:bg-white/20 md:grid";
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Photo viewer" className="fixed inset-0 z-50 select-none bg-[#0f0b09] text-white">
+    <div role="dialog" aria-modal="true" aria-label="Photo viewer" className="viewer-in fixed inset-0 z-50 select-none bg-[#0f0b09] text-white">
       {/* Photo */}
       <div
         className="absolute inset-0 flex touch-pan-y items-center justify-center"
@@ -175,18 +179,20 @@ export function Viewer({ photos, index, canEdit, error, onIndex, onClose, onSave
                 onClick={() => onSave(photo, { favorite: !photo.favorite })}
                 aria-pressed={photo.favorite}
                 aria-label={photo.favorite ? "Remove from favorites" : "Add to favorites"}
-                className="grid size-11 place-items-center rounded-full hover:bg-white/10"
+                className="press relative grid size-11 place-items-center rounded-full hover:bg-white/10"
               >
-                <Heart className={`size-6 ${photo.favorite ? "text-[#e8768a]" : ""}`} filled={photo.favorite} />
+                <Heart key={`${photo.id}-${photo.favorite}`} className={`size-6 ${photo.favorite ? "pop-in text-[#e8768a]" : ""}`} filled={photo.favorite} />
+                {burst > 0 && photo.favorite && <HeartBurst key={burst} />}
               </button>
-              <button type="button" onClick={() => setEditing(true)} className="rounded-full px-4 py-2 text-sm hover:bg-white/10">
+              <button type="button" onClick={() => setEditing(true)} className="press rounded-full px-4 py-2 text-sm hover:bg-white/10">
                 Edit
               </button>
               <button
                 type="button"
                 onClick={() => onDelete(photo)}
-                className="rounded-full px-4 py-2 text-sm text-white/80 hover:bg-white/10 hover:text-[#f3a7b4]"
+                className="press inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm text-white/85 hover:bg-white/10 hover:text-[#f3a7b4]"
               >
+                <TrashIcon />
                 Delete
               </button>
             </div>
@@ -238,7 +244,7 @@ function EditSheet({
         onSubmit={submit}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.key === "Escape" && onCancel()}
-        className="w-full max-w-md rounded-t-3xl bg-paper p-6 text-cocoa sm:rounded-3xl"
+        className="sheet-up w-full max-w-md rounded-t-3xl bg-paper p-6 text-cocoa sm:rounded-3xl"
       >
         <h2 className="font-display text-2xl font-semibold">Edit photo</h2>
         <label className="mt-4 block text-sm text-brown">

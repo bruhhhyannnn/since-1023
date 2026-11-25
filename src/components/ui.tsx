@@ -11,7 +11,7 @@ export function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="mt-16 sm:mt-20">
+    <section className="reveal mt-16 sm:mt-20">
       <div className="mb-5 flex items-end justify-between gap-4">
         <h2 className="font-display text-3xl font-semibold text-cocoa sm:text-4xl">{title}</h2>
         {action}

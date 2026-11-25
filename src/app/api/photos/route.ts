@@ -1,5 +1,5 @@
 import { requireOwner } from "@/lib/auth";
-import { LIMITS } from "@/lib/photos";
+import { LIMITS, isPhotoId } from "@/lib/photos";
 import { StoreNotConfiguredError, getStore } from "@/lib/store";
 
 const isJpeg = async (blob: Blob) => {
@@ -52,6 +52,64 @@ export async function POST(request: Request) {
       height: Math.round(height),
     });
     return Response.json({ photo }, { status: 201 });
+  } catch (err) {
+    const status = err instanceof StoreNotConfiguredError ? 503 : 500;
+    return Response.json({ error: (err as Error).message }, { status });
+  }
+}
+
+/** Reads `{ ids: [...] }` for the bulk actions below. */
+async function readIds(request: Request): Promise<{ ids: string[]; body: Record<string, unknown> } | Response> {
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: "Nothing was selected." }, { status: 400 });
+  }
+  const ids = [...new Set(Array.isArray(body.ids) ? body.ids.filter(isPhotoId) : [])];
+  if (ids.length === 0 || ids.length > 500) {
+    return Response.json({ error: "Nothing was selected." }, { status: 400 });
+  }
+  return { ids, body };
+}
+
+/** Runs `fn` over `items`, a few at a time. */
+async function inBatches<T, R>(items: T[], fn: (item: T) => Promise<R>, size = 6): Promise<R[]> {
+  const results: R[] = [];
+  for (let i = 0; i < items.length; i += size) results.push(...(await Promise.all(items.slice(i, i + size).map(fn))));
+  return results;
+}
+
+/** Delete several photos at once (from Select mode). */
+export async function DELETE(request: Request) {
+  const denied = await requireOwner(request);
+  if (denied) return denied;
+  const read = await readIds(request);
+  if (read instanceof Response) return read;
+  try {
+    const store = getStore();
+    const results = await inBatches(read.ids, (id) => store.remove(id));
+    return Response.json({ deleted: results.filter(Boolean).length });
+  } catch (err) {
+    const status = err instanceof StoreNotConfiguredError ? 503 : 500;
+    return Response.json({ error: (err as Error).message }, { status });
+  }
+}
+
+/** Heart or un-heart several photos at once. */
+export async function PATCH(request: Request) {
+  const denied = await requireOwner(request);
+  if (denied) return denied;
+  const read = await readIds(request);
+  if (read instanceof Response) return read;
+  if (typeof read.body.favorite !== "boolean") {
+    return Response.json({ error: "Nothing to change." }, { status: 400 });
+  }
+  const favorite = read.body.favorite;
+  try {
+    const store = getStore();
+    const results = await inBatches(read.ids, (id) => store.update(id, { favorite }));
+    return Response.json({ updated: results.filter(Boolean).length });
   } catch (err) {
     const status = err instanceof StoreNotConfiguredError ? 503 : 500;
     return Response.json({ error: (err as Error).message }, { status });

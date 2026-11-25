@@ -1,5 +1,6 @@
 import "server-only";
 import { connection } from "next/server";
+import { cache } from "react";
 import type { Photo } from "./photos";
 import { getStore, type PhotoStore } from "./store";
 
@@ -12,7 +13,7 @@ export type Loaded = {
 };
 
 /** Every photo, newest first. Always fresh, so new uploads show up right away. */
-export async function loadPhotos(): Promise<Loaded> {
+export const loadPhotos = cache(async (): Promise<Loaded> => {
   await connection();
   const store = getStore();
   const now = Date.now();
@@ -22,4 +23,4 @@ export async function loadPhotos(): Promise<Loaded> {
     console.error(err);
     return { photos: [], kind: store.kind, now, error: (err as Error).message };
   }
-}
+});

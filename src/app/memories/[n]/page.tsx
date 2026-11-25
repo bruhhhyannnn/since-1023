@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { AlbumView } from "@/components/AlbumView";
 import { StorageNotice } from "@/components/ui";
+import { PageTransition } from "@/components/motion/PageTransition";
 import { albumOf } from "@/lib/albums";
 import { getOwner } from "@/lib/auth";
 import { loadPhotos } from "@/lib/data";
@@ -18,14 +19,16 @@ export async function generateMetadata({ params }: PageProps<"/memories/[n]">): 
 
 export default function AlbumPage({ params, searchParams }: PageProps<"/memories/[n]">) {
   return (
-    <div className="mx-auto max-w-5xl px-4 pt-4 sm:pt-8">
-      <Link href="/memories" className="mb-4 inline-block text-sm text-brown hover:text-burgundy">
-        ← All memories
-      </Link>
-      <Suspense fallback={<AlbumSkeleton />}>
-        <Album params={params} searchParams={searchParams} />
-      </Suspense>
-    </div>
+    <PageTransition>
+      <div className="mx-auto max-w-5xl px-4 pt-4 sm:pt-8">
+        <Link href="/memories" className="mb-4 inline-block text-sm text-brown hover:text-burgundy">
+          ← All memories
+        </Link>
+        <Suspense fallback={<AlbumSkeleton />}>
+          <Album params={params} searchParams={searchParams} />
+        </Suspense>
+      </div>
+    </PageTransition>
   );
 }
 

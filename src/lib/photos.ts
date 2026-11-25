@@ -25,3 +25,6 @@ export const LIMITS = {
   maxUploadBytes: 4_300_000,
   maxCaption: 300,
 };
+
+const PHOTO_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const isPhotoId = (id: unknown): id is string => typeof id === "string" && PHOTO_ID.test(id);

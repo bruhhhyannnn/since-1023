@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Heart } from "@/components/Heart";
+import { FadeImg } from "@/components/motion/FadeImg";
+import { PageTransition } from "@/components/motion/PageTransition";
 import { ButtonLink, StorageNotice } from "@/components/ui";
 import { groupByAlbum, keyPhoto } from "@/lib/albums";
 import { getOwner } from "@/lib/auth";
@@ -14,13 +16,17 @@ export const metadata: Metadata = { title: "Memories" };
 
 export default function MemoriesPage() {
   return (
-    <div className="mx-auto max-w-5xl px-4 pt-10 sm:pt-14">
-      <p className="eyebrow">Our memories</p>
-      <h1 className="mt-2 font-display text-5xl font-semibold text-cocoa sm:text-6xl">Memories</h1>
-      <Suspense fallback={<MemoriesSkeleton />}>
-        <Albums />
-      </Suspense>
-    </div>
+    <PageTransition>
+      <div className="mx-auto max-w-5xl px-4 pt-10 sm:pt-14">
+        <p className="enter eyebrow">Our memories</p>
+        <h1 className="enter mt-2 font-display text-5xl font-semibold text-cocoa sm:text-6xl" style={{ "--d": "80ms" } as React.CSSProperties}>
+          Memories
+        </h1>
+        <Suspense fallback={<MemoriesSkeleton />}>
+          <Albums />
+        </Suspense>
+      </div>
+    </PageTransition>
   );
 }
 
@@ -74,7 +80,7 @@ async function Albums() {
         <StorageNotice loaded={loaded} />
 
         {featured !== undefined && (
-          <div>
+          <div className="enter" style={{ "--d": "120ms" } as React.CSSProperties}>
             <FeaturedAlbum n={featured} photos={groups.get(featured)!} label={featuredLabel} celebrating={today === featured} />
             <div className="mt-4 flex justify-center sm:justify-start">
               <ButtonLink href={`/memories/${featured}?wrapped=1`}>
@@ -100,8 +106,8 @@ async function Albums() {
         <section className="mt-12">
           <h2 className="font-display text-3xl font-semibold text-cocoa">Every monthsary</h2>
           <ul className="mt-5 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4">
-            {tiles.map((n) => (
-              <li key={n}>
+            {tiles.map((n, i) => (
+              <li key={n} className="tile-in min-w-0" style={{ "--i": i } as React.CSSProperties}>
                 <AlbumTile n={n} photos={groups.get(n) ?? []} isCurrent={n === current} />
               </li>
             ))}
@@ -129,11 +135,7 @@ function FeaturedAlbum({
   return (
     <Link href={`/memories/${n}`} className="group relative -mx-4 block overflow-hidden bg-cocoa sm:mx-0 sm:rounded-3xl">
       <div className="relative aspect-[4/5] sm:aspect-[2/1]">
-        <img
-          src={cover.url}
-          alt=""
-          className="absolute inset-0 size-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
-        />
+        <FadeImg src={cover.url} alt="" className="kenburns-slow absolute inset-0 size-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/20" />
         {label && (
           <span className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-burgundy shadow sm:left-6 sm:top-6">
@@ -159,14 +161,14 @@ function AlbumTile({ n, photos, isCurrent }: { n: number; photos: Photo[]; isCur
   const cover = keyPhoto(photos);
   const { from, to } = albumRange(n);
   return (
-    <Link href={`/memories/${n}`} className="group block">
-      <div className="relative aspect-square overflow-hidden rounded-2xl bg-wheat shadow-sm">
+    <Link href={`/memories/${n}`} className="group block min-w-0">
+      <div className="lift relative aspect-square overflow-hidden rounded-2xl bg-wheat shadow-sm">
         {cover ? (
-          <img
+          <FadeImg
             src={cover.thumbUrl}
             alt=""
             loading="lazy"
-            className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="size-full object-cover group-hover:scale-105"
           />
         ) : (
           <div className="grid size-full place-items-center text-center text-sm text-brown">
@@ -182,10 +184,10 @@ function AlbumTile({ n, photos, isCurrent }: { n: number; photos: Photo[]; isCur
           </span>
         )}
       </div>
-      <h3 className="mt-2 font-display text-xl font-semibold leading-tight text-cocoa group-hover:text-burgundy">
+      <h3 className="mt-2 truncate font-display text-xl font-semibold leading-tight text-cocoa transition-colors group-hover:text-burgundy">
         {monthsaryTitle(n)}
       </h3>
-      <p className="text-sm text-brown">{formatRange(from, to)}</p>
+      <p className="truncate text-sm text-brown">{formatRange(from, to)}</p>
       <p className="text-sm text-brown/80">
         {photos.length} photo{photos.length === 1 ? "" : "s"}
       </p>

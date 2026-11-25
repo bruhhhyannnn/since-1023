@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { OwnerOnly } from "@/components/OwnerOnly";
 import { PostMaker } from "@/components/PostMaker";
 import { StorageNotice } from "@/components/ui";
+import { PageTransition } from "@/components/motion/PageTransition";
 import { loadPhotos } from "@/lib/data";
 import { albumFor } from "@/lib/time";
 
@@ -10,22 +11,24 @@ export const metadata: Metadata = { title: "Monthsary post", robots: { index: fa
 
 export default function MonthsaryPage({ searchParams }: PageProps<"/monthsary">) {
   return (
-    <div className="mx-auto max-w-5xl px-4 pt-10 sm:pt-14">
-      <header>
-        <p className="eyebrow">For Instagram</p>
-        <h1 className="mt-2 font-display text-5xl font-semibold text-cocoa">Make the monthsary post</h1>
-        <p className="mt-2 max-w-xl text-brown">
-          Pick a monthsary and its photos. We&apos;ll lay them out with our dates, ready to share or save.
-        </p>
-      </header>
-      <div className="mt-10">
-        <Suspense fallback={<div className="aspect-[4/5] max-w-md animate-pulse rounded-3xl bg-wheat/70" />}>
-          <OwnerOnly>
-            <Maker searchParams={searchParams} />
-          </OwnerOnly>
-        </Suspense>
+    <PageTransition>
+      <div className="mx-auto max-w-5xl px-4 pt-10 sm:pt-14">
+        <header>
+          <p className="eyebrow">For Instagram</p>
+          <h1 className="mt-2 font-display text-5xl font-semibold text-cocoa">Make the monthsary post</h1>
+          <p className="mt-2 max-w-xl text-brown">
+            Pick a monthsary and its photos. We&apos;ll lay them out with our dates, ready to share or save.
+          </p>
+        </header>
+        <div className="mt-10">
+          <Suspense fallback={<div className="aspect-[4/5] max-w-md animate-pulse rounded-3xl bg-wheat/70" />}>
+            <OwnerOnly>
+              <Maker searchParams={searchParams} />
+            </OwnerOnly>
+          </Suspense>
+        </div>
       </div>
-    </div>
+    </PageTransition>
   );
 }
 

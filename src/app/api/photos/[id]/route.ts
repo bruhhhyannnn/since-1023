@@ -1,8 +1,6 @@
 import { requireOwner } from "@/lib/auth";
-import { LIMITS, type PhotoPatch } from "@/lib/photos";
+import { LIMITS, isPhotoId, type PhotoPatch } from "@/lib/photos";
 import { StoreNotConfiguredError, getStore } from "@/lib/store";
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function failure(err: unknown) {
   const status = err instanceof StoreNotConfiguredError ? 503 : 500;
@@ -14,7 +12,7 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/photos/[id
   const denied = await requireOwner(request);
   if (denied) return denied;
   const { id } = await ctx.params;
-  if (!UUID.test(id)) return Response.json({ error: "Photo not found." }, { status: 404 });
+  if (!isPhotoId(id)) return Response.json({ error: "Photo not found." }, { status: 404 });
 
   let body: Record<string, unknown>;
   try {
@@ -51,7 +49,7 @@ export async function DELETE(request: Request, ctx: RouteContext<"/api/photos/[i
   const denied = await requireOwner(request);
   if (denied) return denied;
   const { id } = await ctx.params;
-  if (!UUID.test(id)) return Response.json({ error: "Photo not found." }, { status: 404 });
+  if (!isPhotoId(id)) return Response.json({ error: "Photo not found." }, { status: 404 });
 
   try {
     const removed = await getStore().remove(id);

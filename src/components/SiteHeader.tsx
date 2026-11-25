@@ -7,7 +7,7 @@ import { NavLinks } from "./NavLinks";
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-30 border-b border-wheat-deep/60 bg-cream/85 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-wheat-deep/60 bg-cream/85 backdrop-blur" style={{ viewTransitionName: "site-header" }}>
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-3 px-4">
         <Link href="/" className="flex shrink-0 items-center gap-1.5 text-burgundy">
           <Heart className="size-4" />

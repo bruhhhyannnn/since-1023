@@ -16,6 +16,8 @@ import {
 } from "@/lib/time";
 import { useNow } from "@/lib/use-now";
 import { Heart } from "./Heart";
+import { HeartConfetti } from "./motion/HeartConfetti";
+import { RollingNumber } from "./motion/RollingNumber";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -34,14 +36,15 @@ export function LiveCounter() {
 
   return (
     <div role="timer" aria-live="off" className="mx-auto grid max-w-4xl grid-cols-3 gap-2.5 sm:grid-cols-6 sm:gap-3">
-      {units.map(([value, label, padded]) => (
+      {units.map(([value, label, padded], i) => (
         <div
           key={label}
-          className="rounded-2xl border border-wheat-deep/70 bg-paper/80 px-1 pb-3 pt-2 shadow-[0_1px_0_var(--color-wheat-deep)]"
+          className="enter lift rounded-2xl border border-wheat-deep/70 bg-paper/80 px-1 pb-3 pt-2 shadow-[0_1px_0_var(--color-wheat-deep)]"
+          style={{ "--d": `${450 + i * 70}ms` } as React.CSSProperties}
         >
           <div className="tabular font-display text-5xl font-semibold leading-none text-burgundy sm:text-6xl">
             <span className="inline-block pt-2">
-              {value === undefined ? "–" : padded ? pad(value) : value}
+              {value === undefined ? "–" : <RollingNumber value={padded ? pad(value) : String(value)} />}
             </span>
           </div>
           <div className="eyebrow mt-2">
@@ -65,16 +68,19 @@ export function TodayLine() {
   return (
     <p className="text-brown">
       {today !== null ? (
-        <Link
-          href={`/memories/${today}?wrapped=1`}
-          className="inline-flex items-center gap-2 rounded-full bg-burgundy px-4 py-1.5 text-sm font-medium text-cream transition-colors hover:bg-burgundy-dark"
-        >
-          <Heart className="beat size-3.5" /> Happy {monthsaryTitle(today)}! Watch our Wrapped →
-        </Link>
-      ) : (
         <>
-          Today is day <span className="tabular font-semibold text-burgundy">{num(dayNumber(now))}</span> of us
+          <HeartConfetti />
+          <Link
+            href={`/memories/${today}?wrapped=1`}
+            className="pop-in press inline-flex items-center gap-2 rounded-full bg-burgundy px-4 py-1.5 text-sm font-medium text-cream shadow-lg shadow-burgundy/25 hover:bg-burgundy-dark"
+          >
+            <Heart className="beat size-3.5" /> Happy {monthsaryTitle(today)}! Watch our Wrapped →
+          </Link>
         </>
+      ) : (
+        <span className="fade-in">
+          Today is day <span className="tabular font-semibold text-burgundy">{num(dayNumber(now))}</span> of us
+        </span>
       )}
     </p>
   );
@@ -92,7 +98,7 @@ function Countdown({ ms }: { ms: number }) {
     <div className="tabular mt-4 flex items-baseline gap-3 text-cocoa">
       {parts.map(([v, label], i) => (
         <span key={label}>
-          <span className="font-display text-3xl font-semibold text-burgundy">{i === 0 ? num(v) : pad(v)}</span>{" "}
+          <RollingNumber value={i === 0 ? num(v) : pad(v)} className="font-display text-3xl font-semibold text-burgundy" />{" "}
           <span className="text-xs uppercase tracking-wider text-brown">{label}</span>
         </span>
       ))}
@@ -114,7 +120,7 @@ export function NextDates() {
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       {(cards ?? [null, null]).map((c, i) => (
-        <article key={i} className="min-h-44 rounded-3xl border border-wheat-deep/70 bg-paper/80 p-6">
+        <article key={i} className="lift min-h-44 rounded-3xl border border-wheat-deep/70 bg-paper/80 p-6">
           {c && (
             <>
               <p className="eyebrow">{c.eyebrow}</p>
@@ -149,7 +155,7 @@ export function Totals() {
         <div key={key} className="border-l-2 border-tan/60 pl-4">
           <dt className="eyebrow">{label}</dt>
           <dd className="tabular mt-1 font-display text-3xl font-semibold text-burgundy sm:text-4xl">
-            {t ? num(t[key]) : "–"}
+            {t ? <RollingNumber value={num(t[key])} /> : "–"}
           </dd>
         </div>
       ))}
